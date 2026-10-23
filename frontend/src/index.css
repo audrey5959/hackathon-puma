@@ -1,0 +1,60 @@
+:root {
+  --coral: #db6a41;
+  --ink: #211d1d;
+  --cream: #fff8f4;
+  --yellow: #fcea8b;
+  --muted: #78685e;
+  --line: #211d1d26;
+  --bg: #e7d9cd;
+  color: var(--ink);
+  font-family: "Noto Sans TC", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); }
+h1 { font-size: 22px; margin: 4px 0 16px; }
+h2 { font-size: 18px; margin: 0; }
+
+button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+button:hover { background: var(--ink); color: var(--cream); }
+button:disabled { opacity: 0.5; }
+
+.bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: var(--ink); color: var(--cream); }
+.brand { color: var(--cream); font-weight: 700; font-size: 18px; text-decoration: none; }
+.tag { font-size: 12px; background: var(--yellow); color: var(--ink); padding: 2px 8px; border-radius: 6px; }
+.muted { color: var(--muted); font-size: 13px; }
+.err { color: var(--coral); }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.admin { display: grid; grid-template-columns: 1fr 360px; height: calc(100vh - 48px); }
+.map { height: 100%; }
+.panel { overflow-y: auto; padding: 16px; background: var(--cream); border-left: 1px solid var(--line); }
+.cases { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
+.cases li { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.cases li.open { border-left: 4px solid var(--coral); }
+.cases li.assigned { border-left: 4px solid #d9a400; }
+.cases li.done { opacity: 0.6; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
+.badge.kind { background: var(--yellow); color: var(--ink); }
+
+.citizen { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+.kinds { display: grid; gap: 10px; }
+.kinds button { min-height: 56px; font-size: 18px; }
+.progress ol { list-style: none; padding: 0; display: grid; gap: 8px; }
+.progress li { padding: 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--cream); color: var(--muted); }
+.progress li.on { background: var(--ink); color: var(--cream); }
+
+@media (max-width: 760px) {
+  .admin { grid-template-columns: 1fr; grid-template-rows: 50vh auto; height: auto; }
+  .panel { border-left: 0; }
+}

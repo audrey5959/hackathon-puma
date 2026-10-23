@@ -1,0 +1,19 @@
+{
+	"name": "backend",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "cf build",
+		"deploy": "cf deploy",
+		"typecheck": "cf workers types && tsc",
+		"db:migrate": "cf d1 migrations apply d41bd622-3049-4e7f-9589-68465e19b128",
+		"db:migrate:local": "cf d1 migrations apply d41bd622-3049-4e7f-9589-68465e19b128 --local --persist-to .cloudflare/state"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "beta",
+		"cf": "^1.0.0-beta.5",
+		"typescript": "^7.0.2",
+		"vite": "^8.3.0"
+	}
+}
