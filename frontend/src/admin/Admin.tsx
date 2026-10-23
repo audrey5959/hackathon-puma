@@ -5,7 +5,7 @@ import { Layer, Map as MapView, Marker, NavigationControl, Popup, Source, type L
 import type { FeatureCollection } from "geojson";
 import { useEffect, useRef, useState } from "react";
 import bins from "../../../data/bins.json";
-import { advance, BINS, binById, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
+import { advance, BINS, binById, clearCases, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
 
 // MapLibre 預設從自己檔案的同目錄找 worker；Vite 打包後同目錄沒有這個檔，要明確指定。
 // 同一份 maplibregl 也要用 mapLib 傳給 <MapView>，否則 react-maplibre 會自己再載一份，這裡的設定就不生效
@@ -288,6 +288,12 @@ export default function Admin() {
   const selectedCase = selected === null ? undefined : active.get(selected);
   const shown = visible.filter((c) => matches(c, filter));
 
+  async function clearAll() {
+    if (!confirm("清除本機所有案件與回報？")) return;
+    await clearCases();
+    refresh();
+  }
+
   return (
     <main className="admin">
       <div className="map">
@@ -381,6 +387,7 @@ export default function Admin() {
         <div className="row">
           <h2>待辦</h2>
           <button onClick={() => simulateSensor()}>模擬感測器</button>
+          {import.meta.env.DEV && <button onClick={clearAll}>清除案件</button>}
         </div>
         <DistrictSelect value={district} options={DISTRICTS} onChange={setDistrict} />
         <div className="chips">
