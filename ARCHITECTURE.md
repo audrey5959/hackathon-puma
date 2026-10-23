@@ -1,6 +1,6 @@
 # 桶緝犯：系統架構
 
-一個 Cloudflare Worker 同時提供靜態網站與 API，回報與案件存在 D1，前端每 2 秒輪詢。不用 Supabase、Vercel，也不用即時推播。
+前後端分成兩個 Cloudflare Worker：前端 Worker 提供靜態網站，並把 `/api/*` 透過 service binding 轉給後端 Worker；後端 Worker 存取 D1。對外只有一個網址，前端每 2 秒輪詢。不用 Supabase、Vercel，也不用即時推播。
 
 範圍與功能優先順序見 [桶緝犯_作戰計畫.md](桶緝犯_作戰計畫.md) 第 2 節。
 
@@ -15,18 +15,19 @@
 | Supabase + Vercel（作戰計畫原本的建議） | 不用 | 不用寫伺服器，但要設定 RLS、publication、金鑰與兩個平台的環境變數；設定量比程式碼多。Vercel Hobby 方案沒有團隊協作功能 |
 | Supabase Realtime 即時推播 | 不用 | 每 2 秒輪詢在現場 Demo 看起來一樣即時，省掉 publication 與 RLS select 設定 |
 | 完全不要後端（單機左右並排 Demo） | 不用 | 現場無法用手機掃 QR Code 回報，失去 Demo 最有說服力的一段 |
-| **Cloudflare Worker + D1** | **採用** | 一個服務、一個網址、一次部署；API 只有四條路由 |
+| **Cloudflare Worker + D1** | **採用** | 一個網址、一個平台；API 只有四條路由 |
+| 前後端兩個 Worker 各自對外，前端跨網域呼叫 API | 不用 | 要設定 CORS 與 API 網址環境變數，提交與 Demo 要處理兩個網址；改用 service binding 轉發就只有一個網址 |
 
 ## 技術組合
 
 | 層 | 選擇 | 備註 |
 |---|---|---|
-| 前端 | Vite 8、React 19、TypeScript | 市民端與管理端是同一份程式的兩個路由 |
+| 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的兩個路由 |
 | 地圖 | react-leaflet 5、Leaflet 1.9.4 | react-leaflet 5 要求 React 19 與 Leaflet ^1.9 |
 | 底圖 | OpenStreetMap 官方圖磚 | 必須在地圖上標示 © OpenStreetMap contributors |
-| 後端 | Cloudflare Worker（含 Static Assets） | `/api/*` 先進 Worker，其餘回傳前端檔案 |
+| 後端 | Cloudflare Worker | `backend/`；只處理 `/api/*`，不放靜態檔 |
 | 資料庫 | Cloudflare D1 | 只存回報與案件 |
-| 靜態資料 | GeoJSON，Python（uv）轉檔 | 放在前端，不進資料庫 |
+| 靜態資料 | GeoJSON，Python（uv）轉檔 | `data/bins.json`，前端畫地圖、後端驗證 `bin_id`，不進資料庫 |
 | 工具 | bun、cf CLI | |
 
 版本為 2026-10-23 在 npm 上的最新版。
@@ -40,9 +41,9 @@ graph LR
         Admin[清潔隊管理端]
     end
 
-    subgraph CF[Cloudflare Worker]
-        Static[靜態網站<br/>React + Leaflet]
-        API[API<br/>/api/*]
+    subgraph CF[Cloudflare]
+        Static[前端 Worker tongjifan<br/>React + Leaflet]
+        API[後端 Worker tongjifan-api<br/>/api/*]
     end
 
     subgraph Data[資料]
@@ -58,8 +59,7 @@ graph LR
     Admin --> Static
     Static --> Geo
     Static --> OSM
-    Citizen -->|POST 回報| API
-    Admin -->|每 2 秒輪詢<br/>PATCH 狀態| API
+    Static -->|service binding<br/>轉發 /api/*| API
     API --> D1
     Open --> ETL --> Geo
 ```
@@ -125,12 +125,18 @@ sequenceDiagram
 
 ## 部署
 
-- 一個 Worker 綁定靜態檔與 D1。`assets.not_found_handling` 設為 `single-page-application`，`assets.run_worker_first` 設為 `["/api/*"]`，讓 API 先進 Worker、其餘路由回傳前端（[Static Assets 路由](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/)）。
-- D1 以 `d1_databases` 綁定為 `DB`，Worker 內用 `env.DB.prepare(...).bind(...)` 查詢。
-- 資料表用 D1 migrations 建立（`cf d1 migrations create`、`cf d1 migrations apply`），部署用 `cf deploy`。
+| Worker | 資料夾 | 網址 | 綁定 |
+|---|---|---|---|
+| `tongjifan`（前端） | `frontend/` | https://tongjifan.nick12703990.workers.dev | `API` → `tongjifan-api` |
+| `tongjifan-api`（後端） | `backend/` | 不對外使用，只經由前端轉發 | `DB` → D1 `tongjifan` |
+
+- 前端設定 `assets.notFoundHandling: "single-page-application"` 與 `assets.runWorkerFirst: ["/api/*"]`：`/api/*` 進前端 Worker，由它 `env.API.fetch(req)` 原樣轉給後端，其餘路由回傳前端檔案（[Static Assets 路由](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/)）。
+- 設定檔是各資料夾的 `cloudflare.config.ts`（`cf` 的 TypeScript 格式，不是 `wrangler.jsonc`）。`cf` 是 beta，D1 migrations 與 Wrangler 相容。
+- 資料表用 D1 migrations 建立（`backend/migrations/`），部署用 `cf deploy`。指令見 [backend/README.md](backend/README.md) 與 [frontend/README.md](frontend/README.md)。
+- 新的 Worker 第一次部署後約 5 分鐘內會間歇回 `error code: 1042`，之後穩定；重新部署不會再出現。所以兩個 Worker 要在 Demo 前一晚先部署好。
+- 本機開發要同時跑前後端兩個 dev server，前端才轉發得到本機後端；只跑前端時 `/api/*` 回 503。
 
 ## 待確認
 
-- `cf` 目前是 beta（v1.0.0-beta.5），專案設定檔的格式要在 `cf init workers` 時確認。隊員如果只熟 Wrangler，D1 migrations 的資料格式兩者相容。
 - repo 目前是私人的，作品提交前要改成公開（作戰計畫第 6 節）。
 - 底圖若要換成 CARTO 淺色底圖，需要申請 API key（2026-09-23 起點陣底圖要求金鑰），並同時標示 © OpenStreetMap 與 © CARTO（[CARTO Basemaps FAQ](https://docs.carto.com/faqs/carto-basemaps)）。
