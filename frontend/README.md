@@ -1,6 +1,6 @@
 # 桶緝犯 frontend
 
-Vite + React + react-leaflet。前端 Worker `tongjifan` 提供靜態檔，並把 `/api/*` 轉給後端 Worker `tongjifan-api`。架構與 API 合約見 [../ARCHITECTURE.md](../ARCHITECTURE.md)。
+Vite + React + MapLibre GL（@vis.gl/react-maplibre）。前端 Worker `tongjifan` 提供靜態檔，並把 `/api/*` 轉給後端 Worker `tongjifan-api`。架構與 API 合約見 [../ARCHITECTURE.md](../ARCHITECTURE.md)。
 
 | 路由 | 畫面 | 程式 |
 |---|---|---|

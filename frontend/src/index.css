@@ -36,13 +36,41 @@ button:disabled { opacity: 0.5; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
 .admin { display: grid; grid-template-columns: 1fr 360px; height: calc(100vh - 48px); }
-.map { height: 100%; }
+.map { position: relative; height: 100%; }
+.loading { padding: 16px; }
+
+.pin { display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--cream); color: var(--cream); font-size: 11px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 4px #0005; transition: transform 0.15s; }
+.pin.open { background: var(--coral); border-radius: 50%; animation: pulse 1.6s ease-out infinite; }
+.pin.assigned { background: #d9a400; border-radius: 4px; transform: rotate(45deg); }
+.pin.assigned span { transform: rotate(-45deg); }
+.pin.hot { transform: scale(1.35); z-index: 1; }
+.pin.assigned.hot { transform: rotate(45deg) scale(1.35); }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 #db6a41aa; }
+  100% { box-shadow: 0 0 0 16px #db6a4100; }
+}
+@media (prefers-reduced-motion: reduce) { .pin.open { animation: none; } }
+
+.popup { display: grid; gap: 6px; font: 14px/1.4 "Noto Sans TC", system-ui, sans-serif; }
+.popup button { min-height: 36px; }
+.legend { position: absolute; left: 10px; top: 10px; max-width: calc(100% - 70px); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 6px 10px; border-radius: 9px; background: #fff8f4e6; font-size: 13px; box-shadow: 0 1px 4px #0002; }
+.legend span { display: flex; gap: 4px; align-items: center; }
+.dot { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--cream); }
+.dot.open { background: var(--coral); border-radius: 50%; }
+.dot.assigned { background: #d9a400; transform: rotate(45deg) scale(0.85); }
+.dot.idle { background: #8a7f78; border-radius: 50%; width: 8px; height: 8px; }
+.toast { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 100px); background: var(--ink); color: var(--cream); box-shadow: 0 4px 12px #0004; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast:hover { background: var(--coral); }
+.chips { display: flex; gap: 6px; margin-top: 12px; }
+.chips button { min-height: 32px; padding: 0 12px; border-radius: 16px; font-size: 13px; }
+.chips button.on { background: var(--ink); color: var(--cream); }
 .panel { overflow-y: auto; padding: 16px; background: var(--cream); border-left: 1px solid var(--line); }
 .cases { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
-.cases li { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.cases li { cursor: pointer; display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .cases li.open { border-left: 4px solid var(--coral); }
 .cases li.assigned { border-left: 4px solid #d9a400; }
 .cases li.done { opacity: 0.6; }
+.cases li.selected { outline: 2px solid var(--ink); }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; }
 .badge { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
 .badge.kind { background: var(--yellow); color: var(--ink); }

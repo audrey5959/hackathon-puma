@@ -23,8 +23,8 @@
 | 層 | 選擇 | 備註 |
 |---|---|---|
 | 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的兩個路由 |
-| 地圖 | react-leaflet 5、Leaflet 1.9.4 | react-leaflet 5 要求 React 19 與 Leaflet ^1.9 |
-| 底圖 | OpenStreetMap 官方圖磚 | 必須在地圖上標示 © OpenStreetMap contributors |
+| 地圖 | MapLibre GL JS 6.13.0、@vis.gl/react-maplibre 8.1.3 | WebGL 繪圖；桶位是一個 GeoJSON source，案件狀態用 feature-state 更新，輪詢時不重畫整個圖層。管理端用 `React.lazy` 拆開，市民回報頁不載入地圖 |
+| 底圖 | [OpenFreeMap](https://openfreemap.org/) positron 向量圖磚 | 免金鑰、無流量限制、可商用；必須標示 © OpenMapTiles 與 © OpenStreetMap，MapLibre 會自動加上。地名改成只顯示正體中文 |
 | 後端 | Cloudflare Worker | `backend/`；只處理 `/api/*`，不放靜態檔 |
 | 資料庫 | Cloudflare D1 | 只存回報與案件 |
 | 靜態資料 | GeoJSON，Python（uv）轉檔 | `data/bins.json`，前端畫地圖、後端驗證 `bin_id`，不進資料庫 |
@@ -42,7 +42,7 @@ graph LR
     end
 
     subgraph CF[Cloudflare]
-        Static[前端 Worker tongjifan<br/>React + Leaflet]
+        Static[前端 Worker tongjifan<br/>React + MapLibre]
         API[後端 Worker tongjifan-api<br/>/api/*]
     end
 
@@ -51,7 +51,7 @@ graph LR
         D1[(D1<br/>reports・cases)]
     end
 
-    OSM[OSM 圖磚]
+    OSM[OpenFreeMap 向量圖磚]
     Open[政府開放資料<br/>CSV Big5]
     ETL[轉檔腳本<br/>Python + uv]
 
@@ -139,4 +139,4 @@ sequenceDiagram
 ## 待確認
 
 - repo 目前是私人的，作品提交前要改成公開（作戰計畫第 6 節）。
-- 底圖若要換成 CARTO 淺色底圖，需要申請 API key（2026-09-23 起點陣底圖要求金鑰），並同時標示 © OpenStreetMap 與 © CARTO（[CARTO Basemaps FAQ](https://docs.carto.com/faqs/carto-basemaps)）。
+- 底圖依賴 OpenFreeMap 的公開服務。賽後若要自己掌握，可以把臺北範圍的 Protomaps PMTiles 放到 R2，由 Worker 轉發。
