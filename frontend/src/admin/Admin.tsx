@@ -1,6 +1,26 @@
 import "leaflet/dist/leaflet.css";
-import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
+import { setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
+import { useEffect } from "react";
+import { CircleMarker, MapContainer, Popup, useMap } from "react-leaflet";
 import { advance, BINS, binById, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
+
+setWorkerUrl(workerUrl);
+
+const POSITRON_STYLE = "https://tiles.openfreemap.org/styles/positron";
+
+function PositronBasemap() {
+  const map = useMap();
+  useEffect(() => {
+    const layer = maplibreGL({ style: POSITRON_STYLE }).addTo(map);
+    return () => {
+      map.removeLayer(layer);
+    };
+  }, [map]);
+  return null;
+}
 
 const DEMO_DISTRICTS = ["萬華區", "中正區"];
 const DEMO_POOL = BINS.filter((b) => DEMO_DISTRICTS.includes(b.properties.district));
@@ -24,11 +44,15 @@ export default function Admin() {
 
   return (
     <main className="admin">
-      <MapContainer center={[25.04, 121.505]} zoom={14} className="map">
-        <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
+      <MapContainer
+        center={[25.04, 121.505]}
+        zoom={14}
+        minZoom={1}
+        maxBounds={[[-85, -Infinity], [85, Infinity]]}
+        maxBoundsViscosity={1}
+        className="map"
+      >
+        <PositronBasemap />
         {BINS.map((b) => {
           const c = active.get(b.properties.id);
           const [lon, lat] = b.geometry.coordinates;
