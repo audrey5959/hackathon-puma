@@ -1,6 +1,0 @@
-# 只鎖會影響正式資料或已印出 QR Code 的檔案，其他路徑不需要指定審查者。
-# 同一行列出多人時，任一人核准即可。
-
-/backend/migrations/ @audrey5959 @musingfox
-/data/bins.json      @audrey5959 @musingfox
-/.github/            @audrey5959 @musingfox
