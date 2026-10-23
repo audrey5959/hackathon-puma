@@ -23,6 +23,17 @@
 
 改了 `backend/migrations/` 的 PR，要在說明裡寫出需要負責人跑 `db:migrate`。
 
+## 分支與 PR
+
+main 只接受 PR，一律 Squash merge。`ci`（型別、建置、lint、migration 編號）通過就能合併，不需要等人核准；只有 `.github/CODEOWNERS` 列出的路徑要負責人核准。
+
+- 分支從最新的 main 開，命名 `feat/`、`fix/`、`docs/` 加簡短描述，最好半天內合併
+- PR 盡量小；改 API 合約時，`frontend/src/shared/api.ts` 和 ARCHITECTURE.md 的 API 表放在同一個 PR，而且先合併，功能 PR 再跟上
+- 新增 migration 前先 `git fetch`，編號接在 main 最新的那支之後；main 的 CI 紅燈寫著「重複的 migration 編號」時，後合併的人要改號
+- `bun.lock` 衝突不要手動合併：拿 main 的版本，再跑一次 `bun install`
+- 要大改共用區塊（例如地圖元件、`src/shared/`）前，先在群組說一聲
+- main 的 CI 紅燈時，誰合併造成的就由誰先修
+
 ## 本機開發
 
 後端要先跑，前端才轉發得到 `/api/*`。
