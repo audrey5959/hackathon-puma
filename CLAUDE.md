@@ -13,15 +13,18 @@
 
 工具：JS 用 `bun`，Cloudflare 用 `cf`（設定檔是各資料夾的 `cloudflare.config.ts`，不是 `wrangler.jsonc`）。
 
-## 部署：只由 repo 負責人執行
+## 部署：只由部署負責人執行
 
-不要執行下列指令，需要上線時請負責人處理：
+| 權限 | 負責人 |
+|---|---|
+| 部署兩個 Worker（`bun run deploy`） | Nick（@musingfox）、William（@w71800）、Jin（@cyl-jsl） |
+| 正式 D1：`bun run db:migrate`、任何寫入或刪除 | 只有 Nick |
 
-- `bun run deploy`（frontend 或 backend）
-- `bun run db:migrate`（套用 migration 到正式 D1）
-- 任何對正式 D1 的寫入或刪除，例如 `cf d1 query ... --sql "DELETE ..."`；正式資料可能是隊友正在 Demo 的案件
+部署負責人用 `/deploy`（`.claude/skills/deploy/`）從 `origin/main` 部署，成功後打 `deploy-*` tag，正式環境跑的就是最新的那個 tag。改了這個 skill 要跑 [evals/deploy-skill/](evals/deploy-skill/README.md) 的 eval，每個案例都要 1.00。
 
-改了 `backend/migrations/` 的 PR，要在說明裡寫出需要負責人跑 `db:migrate`。
+其他人不要執行 `bun run deploy`、`bun run db:migrate`，也不要對正式 D1 寫入或刪除（例如 `cf d1 query ... --sql "DELETE ..."`）；正式資料可能是隊友正在 Demo 的案件。需要上線時請部署負責人處理。
+
+改了 `backend/migrations/` 的 PR，要在說明裡寫出需要 Nick 跑 `db:migrate`。
 
 ## 分支與 PR
 
