@@ -206,10 +206,16 @@ export default function Admin() {
   const [cases, refresh] = usePoll<Case[]>("/api/cases");
   const mapRef = useRef<MapRef>(null);
   const [loaded, setLoaded] = useState(false);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(() => {
+    const binId = Number(new URLSearchParams(location.search).get("bin"));
+    return Number.isInteger(binId) && binById(binId) ? binId : null;
+  });
   const [hovered, setHovered] = useState<number | null>(null);
   const [filter, setFilter] = useState<Filter>("active");
-  const [district, setDistrict] = useState("");
+  const [district, setDistrict] = useState(() => {
+    const initial = new URLSearchParams(location.search).get("district") ?? "";
+    return DISTRICTS.includes(initial) ? initial : "";
+  });
   const [toast, setToast] = useState<Case | null>(null);
   const known = useRef<Set<number> | null>(null);
   const activeIds = useRef(new Set<number>());
@@ -244,6 +250,16 @@ export default function Admin() {
       map.setFeatureState({ source: "bins", id: hovered }, { hover: false });
     };
   }, [hovered, loaded]);
+
+  // 從清潔狀態點進來時，地圖載入後飛到那座桶
+  const openedBin = useRef(selected);
+  useEffect(() => {
+    if (!loaded || openedBin.current === null) return;
+    const bin = binById(openedBin.current);
+    openedBin.current = null;
+    if (!bin) return;
+    mapRef.current?.flyTo({ center: bin.geometry.coordinates as [number, number], zoom: 16, duration: 800 });
+  }, [loaded]);
 
   // 切換行政區時框住該區；選「全部」回到示範區域。第一次載入由 initialViewState 處理
   const firstDistrict = useRef(true);
@@ -301,7 +317,7 @@ export default function Admin() {
           ref={mapRef}
           mapLib={maplibregl}
           mapStyle={MAP_STYLE}
-          initialViewState={{ bounds: DEMO_BOUNDS, fitBoundsOptions: { padding: 40 } }}
+          initialViewState={{ bounds: districtBounds(district), fitBoundsOptions: { padding: 40 } }}
           maxBounds={[121.3, 24.85, 121.8, 25.3]}
           interactiveLayerIds={["bins"]}
           cursor={hovered === null ? undefined : "pointer"}
