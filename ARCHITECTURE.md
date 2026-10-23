@@ -23,7 +23,7 @@
 | 層 | 選擇 | 備註 |
 |---|---|---|
 | 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的兩個路由 |
-| 地圖 | MapLibre GL JS 6.13.0、@vis.gl/react-maplibre 8.1.3 | WebGL 繪圖；桶位是一個 GeoJSON source，案件狀態用 feature-state 更新，輪詢時不重畫整個圖層。管理端用 `React.lazy` 拆開，市民回報頁不載入地圖 |
+| 地圖 | MapLibre GL JS 6.15、@vis.gl/react-maplibre 8.1.3 | WebGL 繪圖；桶位是一個 GeoJSON source，案件狀態用 feature-state 更新，輪詢時不重畫整個圖層。管理端用 `React.lazy` 拆開，市民回報頁不載入地圖 |
 | 底圖 | [OpenFreeMap](https://openfreemap.org/) positron 向量圖磚 | 免金鑰、無流量限制、可商用；必須標示 © OpenMapTiles 與 © OpenStreetMap，MapLibre 會自動加上。地名改成只顯示正體中文 |
 | 後端 | Cloudflare Worker | `backend/`；只處理 `/api/*`，不放靜態檔 |
 | 資料庫 | Cloudflare D1 | 只存回報與案件 |

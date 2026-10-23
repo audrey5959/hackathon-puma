@@ -43,7 +43,10 @@ button:disabled { opacity: 0.5; }
 .pin.open { background: var(--coral); border-radius: 50%; animation: pulse 1.6s ease-out infinite; }
 .pin.assigned { background: #d9a400; border-radius: 4px; transform: rotate(45deg); }
 .pin.assigned span { transform: rotate(-45deg); }
+.pin span { display: flex; gap: 1px; }
+.pin .badge-icon { width: 11px; height: 11px; }
 .pin.hot { transform: scale(1.35); z-index: 1; }
+.pin.dim { opacity: 0.35; }
 .pin.assigned.hot { transform: rotate(45deg) scale(1.35); }
 @keyframes pulse {
   0% { box-shadow: 0 0 0 0 #db6a41aa; }
@@ -65,6 +68,42 @@ button:disabled { opacity: 0.5; }
 .chips button { min-height: 32px; padding: 0 12px; border-radius: 16px; font-size: 13px; }
 .chips button.on { background: var(--ink); color: var(--cream); }
 .panel { overflow-y: auto; padding: 16px; background: var(--cream); border-left: 1px solid var(--line); }
+.field { display: grid; gap: 4px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.district { position: relative; }
+.district-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  text-align: left;
+  font-size: 16px;
+}
+.district-trigger[aria-expanded="true"] { background: var(--ink); color: var(--cream); }
+.district-trigger .chevron { flex: none; transition: transform 0.15s ease; }
+.district-trigger[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+.district-menu {
+  position: fixed;
+  z-index: 1000;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  box-shadow: 0 8px 24px #211d1d29;
+  overflow-y: auto;
+}
+.district-menu button {
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
+}
+.district-menu button.on { background: var(--yellow); }
+.district-menu button:hover,
+.district-menu button:focus-visible { background: var(--ink); color: var(--cream); }
 .cases { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
 .cases li { cursor: pointer; display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .cases li.open { border-left: 4px solid var(--coral); }
@@ -72,7 +111,8 @@ button:disabled { opacity: 0.5; }
 .cases li.done { opacity: 0.6; }
 .cases li.selected { outline: 2px solid var(--ink); }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; }
-.badge { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
+.badge-icon { flex: none; display: block; }
 .badge.kind { background: var(--yellow); color: var(--ink); }
 
 .citizen { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
