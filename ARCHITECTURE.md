@@ -24,7 +24,7 @@
 |---|---|---|
 | 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的兩個路由 |
 | 地圖 | react-leaflet 5、Leaflet 1.9.4 | react-leaflet 5 要求 React 19 與 Leaflet ^1.9 |
-| 底圖 | OpenStreetMap 官方圖磚 | 必須在地圖上標示 © OpenStreetMap contributors |
+| 底圖 | OpenFreeMap Positron | 樣式 `https://tiles.openfreemap.org/styles/positron`，用 `@maplibre/maplibre-gl-leaflet` 畫在 Leaflet 上。署名由圖磚帶入：OpenFreeMap、© OpenMapTiles、OpenStreetMap |
 | 後端 | Cloudflare Worker | `backend/`；只處理 `/api/*`，不放靜態檔 |
 | 資料庫 | Cloudflare D1 | 只存回報與案件 |
 | 靜態資料 | GeoJSON，Python（uv）轉檔 | `data/bins.json`，前端畫地圖、後端驗證 `bin_id`，不進資料庫 |
