@@ -13,9 +13,11 @@
 
 工具：JS 用 `bun`，Cloudflare 用 `cf`（設定檔是各資料夾的 `cloudflare.config.ts`，不是 `wrangler.jsonc`）。
 
-## 部署：只由 repo 負責人執行
+## 部署：只由部署負責人執行
 
-不要執行下列指令，需要上線時請負責人處理：
+部署負責人：（待確認，見 PR 說明）。部署負責人用 `/deploy`（`.claude/skills/deploy/`）從 `origin/main` 部署，成功後打 `deploy-*` tag，正式環境跑的就是最新的那個 tag。
+
+其他人不要執行下列指令，需要上線時請部署負責人處理：
 
 - `bun run deploy`（frontend 或 backend）
 - `bun run db:migrate`（套用 migration 到正式 D1）
