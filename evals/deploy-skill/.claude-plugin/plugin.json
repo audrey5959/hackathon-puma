@@ -1,0 +1,5 @@
+{
+  "name": "deploy-eval",
+  "description": "Eval harness for .claude/skills/deploy (symlinked); not used at runtime",
+  "experimental": { "evals": "cases" }
+}

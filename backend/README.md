@@ -9,8 +9,8 @@ bun install
 bun run db:migrate:local   # 第一次本機開發前，建立本機 D1 資料表
 bun run dev                # 本機 API；前端 dev server 會自動接到這裡
 bun run typecheck
-bun run db:migrate         # 只由 repo 負責人執行：套用 migrations/ 到正式 D1
-bun run deploy             # 只由 repo 負責人執行
+bun run db:migrate         # 只由 Nick 執行：套用 migrations/ 到正式 D1
+bun run deploy             # 只由部署負責人執行（見 ../CLAUDE.md），用 /deploy
 ```
 
 `dev` 直接跑 `vite` 而不是 `cf dev`：用 `cf dev`（beta）啟動時，前端 dev server 找不到這個 Worker，`/api/*` 一律回 503。

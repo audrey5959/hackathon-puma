@@ -14,7 +14,7 @@ disable-model-invocation: true
 
 ## 部署
 
-1. **確認身分**：`bunx cf auth whoami` 顯示已登入，且 `bunx cf workers scripts search --name tongjifan` 找得到 `tongjifan` 與 `tongjifan-api`。找不到就是登入了錯的帳號，停下來請使用者處理。
+1. **確認身分**：`bunx cf auth whoami` 的 `accounts` 裡有 `Nick12703990@gmail.com's Account`，而且 `bunx cf workers deployments list --worker tongjifan` 與 `--worker tongjifan-api` 都列得出部署紀錄。列不出來就是登入了錯的帳號或沒有權限，停下來請使用者處理。（只有個別 Worker 權限的成員用 `cf workers scripts search` 會查到空陣列，以 `deployments list` 為準。）
 
 2. **取出要部署的版本**：記下目前的分支，確認工作區乾淨（`git status --short` 沒有輸出），然後：
 
@@ -31,7 +31,7 @@ disable-model-invocation: true
 
    正式環境可能有隊友正在 Demo，這一步的同意只對這一次部署有效。
 
-4. **套用 migration**（只有步驟 3 列出新的 migration 時）：`cd backend && bun install --frozen-lockfile && bun run db:migrate`。migration 只能往前，套用後舊版程式碼必須還能在新資料表上運作；看到刪除或改名欄位的 SQL 時先問使用者。
+4. **套用 migration**（只有步驟 3 列出新的 migration 時）：`cd backend && bun install --frozen-lockfile && bun run db:migrate`。這一步需要 D1 權限；`bunx cf d1 list` 回 401 就是沒有，停下來請 Nick 先跑 `db:migrate`，完成後再從步驟 5 繼續。migration 只能往前，套用後舊版程式碼必須還能在新資料表上運作；看到刪除或改名欄位的 SQL 時先問使用者。
 
 5. **先後端、再前端**，兩邊都在乾淨的 `bun install --frozen-lockfile` 之後執行：
 
