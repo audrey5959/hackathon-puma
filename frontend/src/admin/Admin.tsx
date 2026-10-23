@@ -37,6 +37,25 @@ const CITY_CENTER: [number, number] = [25.04, 121.505];
 const CITY_ZOOM = 14;
 const COLOR: Record<string, string> = { open: "#db6a41", assigned: "#d9a400", idle: "#211d1d" };
 const hhmm = (utc: string) => new Date(`${utc.replace(" ", "T")}Z`).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+
+function SensorIcon() {
+  return (
+    <svg className="badge-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="11" r="1.3" fill="currentColor" />
+      <path d="M5.2 8.2a3.4 3.4 0 0 1 5.6 0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M2.8 5.4a6.6 6.6 0 0 1 10.4 0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CitizenIcon() {
+  return (
+    <svg className="badge-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="5" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3.4 13.2a4.6 4.6 0 0 1 9.2 0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 const TRASH_ICON = divIcon({
   className: "trash-pin",
   iconSize: [32, 32],
@@ -271,8 +290,8 @@ export default function Admin() {
                 </div>
                 <div>{bin?.properties.district} {bin?.properties.address}</div>
                 <div className="badges">
-                  {c.sensor_reports > 0 && <span className="badge">感測器 ×{c.sensor_reports}</span>}
-                  {c.citizen_reports > 0 && <span className="badge">民眾 ×{c.citizen_reports}</span>}
+                  {c.sensor_reports > 0 && <span className="badge"><SensorIcon />感測器 ×{c.sensor_reports}</span>}
+                  {c.citizen_reports > 0 && <span className="badge"><CitizenIcon />民眾 ×{c.citizen_reports}</span>}
                   {c.kinds?.split(",").map((k) => <span key={k} className="badge kind">{KIND_LABEL[k as Kind]}</span>)}
                 </div>
                 {c.status === "open" && <button onClick={() => move(c, "assigned")}>指派</button>}

@@ -91,7 +91,8 @@ button:disabled { opacity: 0.5; }
 .cases li.assigned { border-left: 4px solid #d9a400; }
 .cases li.done { opacity: 0.6; }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; }
-.badge { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--cream); }
+.badge-icon { flex: none; display: block; }
 .badge.kind { background: var(--yellow); color: var(--ink); }
 
 .citizen { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
