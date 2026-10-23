@@ -67,6 +67,13 @@ button:disabled { opacity: 0.5; }
 .dot.open { background: var(--coral); border-radius: 50%; }
 .dot.assigned { background: #d9a400; transform: rotate(45deg) scale(0.85); }
 .dot.idle { background: #8a7f78; border-radius: 50%; width: 8px; height: 8px; }
+.dot.candidate { border: 1.5px solid #4b5bd6; }
+.dot.candidate.high { background: #4b5bd699; }
+.dot.candidate.mid { background: #4b5bd661; }
+.dot.candidate.low { background: #4b5bd62e; }
+.legend-toggle { display: flex; gap: 4px; align-items: center; cursor: pointer; }
+.legend-toggle input { margin: 0; }
+.popup .reasons { margin: 0; padding-left: 18px; }
 .toast { position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 100px); background: var(--ink); color: var(--cream); box-shadow: 0 4px 12px #0004; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast:hover { background: var(--coral); }
 .chips { display: flex; gap: 6px; margin-top: 12px; }

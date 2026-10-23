@@ -5,6 +5,7 @@ import { Layer, Map as MapView, Marker, NavigationControl, Popup, Source, type L
 import type { FeatureCollection } from "geojson";
 import { useEffect, useRef, useState } from "react";
 import bins from "../../../data/bins.json";
+import candidates from "../../../data/candidates.json";
 import { advance, BINS, binById, clearCases, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
 
 // MapLibre 預設從自己檔案的同目錄找 worker；Vite 打包後同目錄沒有這個檔，要明確指定。
@@ -71,6 +72,29 @@ const BIN_LAYER: LayerProps = {
     "circle-opacity": 0.85,
   },
 };
+
+// 候選點（建議增設區）：etl/candidates.py 產生的 200m 格子，畫在桶位底下。
+// 人流指數分三級上色：有捷運出入口的格子都在 49 分以上、只有 YouBike 的都在 13 分以下，30 剛好切開兩群
+const CANDIDATES = candidates.features;
+type Tier = "high" | "mid" | "low";
+const TIER_LABEL: Record<Tier, string> = { high: "高", mid: "中", low: "低" };
+const tierOf = (score: number): Tier => (score >= 65 ? "high" : score >= 30 ? "mid" : "low");
+const CAND_FILL: LayerProps = {
+  id: "candidates",
+  type: "fill",
+  paint: { "fill-color": "#4b5bd6", "fill-opacity": ["step", ["get", "score"], 0.18, 30, 0.38, 65, 0.6] },
+};
+// 檔案依人流指數由高到低排序，區內名次照順序數
+const CAND_RANK = new Map<number, number>();
+{
+  const seen = new Map<string, number>();
+  for (const { properties: p } of CANDIDATES) {
+    const n = (seen.get(p.district) ?? 0) + 1;
+    seen.set(p.district, n);
+    CAND_RANK.set(p.id, n);
+  }
+}
+const CAND_LINE: LayerProps = { id: "candidates-line", type: "line", paint: { "line-color": "#4b5bd6", "line-width": 1.5 } };
 
 type Filter = "active" | "done" | "all";
 const FILTER_LABEL: Record<Filter, string> = { active: "進行中", done: "已完成", all: "全部" };
@@ -211,6 +235,9 @@ export default function Admin() {
     return Number.isInteger(binId) && binById(binId) ? binId : null;
   });
   const [hovered, setHovered] = useState<number | null>(null);
+  const [showCandidates, setShowCandidates] = useState(false);
+  const [candidate, setCandidate] = useState<{ id: number; lngLat: [number, number] } | null>(null);
+  const [overCandidate, setOverCandidate] = useState(false);
   const [filter, setFilter] = useState<Filter>("active");
   const [district, setDistrict] = useState(() => {
     const initial = new URLSearchParams(location.search).get("district") ?? "";
@@ -319,17 +346,34 @@ export default function Admin() {
           mapStyle={MAP_STYLE}
           initialViewState={{ bounds: districtBounds(district), fitBoundsOptions: { padding: 40 } }}
           maxBounds={[121.3, 24.85, 121.8, 25.3]}
-          interactiveLayerIds={["bins"]}
-          cursor={hovered === null ? undefined : "pointer"}
+          interactiveLayerIds={showCandidates ? ["bins", "candidates"] : ["bins"]}
+          cursor={hovered === null && !overCandidate ? undefined : "pointer"}
           onLoad={(e) => {
             applyChineseLabels(e.target);
             setLoaded(true);
           }}
-          onMouseMove={(e) => setHovered(e.features?.[0] ? Number(e.features[0].id) : null)}
-          onMouseLeave={() => setHovered(null)}
-          onClick={(e) => setSelected(e.features?.[0] ? Number(e.features[0].id) : null)}
+          onMouseMove={(e) => {
+            // 桶位畫在候選格上面，同一點兩者都有時以桶為準
+            const bin = e.features?.find((f) => f.layer.id === "bins");
+            setHovered(bin ? Number(bin.id) : null);
+            setOverCandidate(!bin && !!e.features?.some((f) => f.layer.id === "candidates"));
+          }}
+          onMouseLeave={() => {
+            setHovered(null);
+            setOverCandidate(false);
+          }}
+          onClick={(e) => {
+            const bin = e.features?.find((f) => f.layer.id === "bins");
+            const cell = bin ? undefined : e.features?.find((f) => f.layer.id === "candidates");
+            setSelected(bin ? Number(bin.id) : null);
+            setCandidate(cell ? { id: Number(cell.id), lngLat: [e.lngLat.lng, e.lngLat.lat] } : null);
+          }}
         >
           <NavigationControl position="top-right" showCompass={false} />
+          <Source id="candidates" type="geojson" data={candidates as FeatureCollection} promoteId="id">
+            {showCandidates && <Layer {...CAND_FILL} beforeId="bins" />}
+            {showCandidates && <Layer {...CAND_LINE} beforeId="bins" />}
+          </Source>
           <Source id="bins" type="geojson" data={bins as FeatureCollection} promoteId="id">
             <Layer {...BIN_LAYER} />
           </Source>
@@ -382,6 +426,20 @@ export default function Admin() {
               </div>
             </Popup>
           )}
+
+          {candidate && showCandidates && (
+            <Popup longitude={candidate.lngLat[0]} latitude={candidate.lngLat[1]} closeOnClick={false} onClose={() => setCandidate(null)}>
+              <div className="popup">
+                <b>建議增設・{CANDIDATES[candidate.id - 1].properties.district}第 {CAND_RANK.get(candidate.id)} 名</b>
+                <div className="muted">
+                  人流{TIER_LABEL[tierOf(CANDIDATES[candidate.id - 1].properties.score)]}（指數 {CANDIDATES[candidate.id - 1].properties.score}）
+                </div>
+                <ul className="reasons">
+                  {CANDIDATES[candidate.id - 1].properties.reasons.map((r) => <li key={r}>{r}</li>)}
+                </ul>
+              </div>
+            </Popup>
+          )}
         </MapView>
 
         <div className="legend">
@@ -390,6 +448,18 @@ export default function Admin() {
           <span><i className="dot idle" />正常</span>
           <span className="muted"><SensorIcon />感測器</span>
           <span className="muted"><CitizenIcon />民眾</span>
+          <label className="legend-toggle">
+            <input type="checkbox" checked={showCandidates} onChange={(e) => setShowCandidates(e.target.checked)} />
+            建議增設
+          </label>
+          {showCandidates && (
+            <span className="muted">
+              人流
+              {(["high", "mid", "low"] as Tier[]).map((t) => (
+                <span key={t}><i className={`dot candidate ${t}`} />{TIER_LABEL[t]}</span>
+              ))}
+            </span>
+          )}
         </div>
 
         {toast && (
