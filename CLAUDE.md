@@ -7,7 +7,7 @@
 | 資料夾 | 內容 |
 |---|---|
 | `frontend/` | Vite + React + MapLibre GL（@vis.gl/react-maplibre）；`src/admin/` 管理端（`/`）、`src/citizen/` 市民端（`/b/<桶編號>`）、`src/shared/` API 呼叫與型別；`worker/` 把 `/api/*` 轉給後端 |
-| `backend/` | 後端 Worker，四條 `/api/*` 路由；`migrations/` 是 D1 資料表 |
+| `backend/` | 後端 Worker，四條 `/api/*` 路由，另有一條本機專用的 `DELETE /api/cases`；`migrations/` 是 D1 資料表 |
 | `data/bins.json` | 桶位，前後端共用；`bin_id` 就是 QR Code 網址上的編號 |
 | `etl/` | 開放資料轉檔（Python，用 `uv` 執行） |
 

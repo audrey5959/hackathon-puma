@@ -63,6 +63,14 @@ async function updateCase(req: Request, db: D1Database, id: number) {
   return json(await getCase(db, id));
 }
 
+// 只給本機開發用：正式網址上的案件可能是隊友正在 Demo 的資料
+const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
+
+async function clearCases(db: D1Database) {
+  await db.batch([db.prepare("DELETE FROM reports"), db.prepare("DELETE FROM cases")]);
+  return json({ ok: true });
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -70,6 +78,7 @@ export default {
 
     if (url.pathname === "/api/reports" && req.method === "POST") return createReport(req, env.DB);
     if (url.pathname === "/api/cases" && req.method === "GET") return listCases(url, env.DB);
+    if (url.pathname === "/api/cases" && req.method === "DELETE" && LOCAL_HOSTS.includes(url.hostname)) return clearCases(env.DB);
     if (caseMatch && req.method === "GET") {
       const found = await getCase(env.DB, Number(caseMatch[1]));
       return found ? json(found) : error(404, "case not found");

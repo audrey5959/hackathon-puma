@@ -36,6 +36,8 @@ export const report = (bin_id: number, source: Source, kind: Kind) =>
 export const advance = (id: number, status: "assigned" | "done") =>
   call<Case>(`/api/cases/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
 
+export const clearCases = () => call<{ ok: true }>("/api/cases", { method: "DELETE" });
+
 export function usePoll<T>(path: string | null, ms = 2000) {
   const [data, setData] = useState<T | null>(null);
   const [tick, setTick] = useState(0);
