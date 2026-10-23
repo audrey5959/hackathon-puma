@@ -1,0 +1,40 @@
+# PR 與 main 的守門檢查：只做型別、建置、lint，不碰 Cloudflare 帳號、不部署。
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 同一個 PR 推新 commit 時，取消舊的那次，不排隊
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      # 兩個 PR 各自新增同編號的 migration 時，後合併的那個在 main 上會紅燈
+      - name: migration 編號不重複
+        run: |
+          dup=$(ls backend/migrations/*.sql | xargs -n1 basename | cut -d_ -f1 | sort | uniq -d)
+          if [ -n "$dup" ]; then echo "重複的 migration 編號：$dup"; exit 1; fi
+
+      - name: backend typecheck
+        working-directory: backend
+        run: bun install --frozen-lockfile && bun run typecheck
+
+      - name: frontend build
+        working-directory: frontend
+        run: bun install --frozen-lockfile && bun run build
+
+      - name: frontend lint
+        working-directory: frontend
+        run: bunx oxlint
