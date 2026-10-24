@@ -173,6 +173,8 @@ export default function Trash() {
     heading = `${why}，下次週${WEEKDAY[day]}收運`;
   } else if (time) heading = `附近 ${time} 之後的垃圾車`;
   const when = (s: Stop) => `${onToday ? "" : `週${WEEKDAY[day]} `}${s.arrive}–${s.leave}`;
+  // 距離的起點：有定位就從目前位置算，沒有就從所選里的中心估算
+  const origin = mine ? "距離從你目前的位置估算" : `距離從${village}中心估算；按「我的位置」可改成從你所在的位置算`;
 
   return (
     <main className="citizen">
@@ -220,6 +222,7 @@ export default function Trash() {
       {!far && (
         <section className="nearby">
           <h2>{heading}</h2>
+          <p className="muted">{origin}</p>
           {wide && <p className="muted">{NEAR_M} m 內沒有停靠點，以下是較遠的。</p>}
           {list.length > 0 && (
             <button className="map-toggle" aria-expanded={mapOn} aria-controls="stop-map" onClick={() => setMapOn((open) => !open)}>
