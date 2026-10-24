@@ -26,15 +26,20 @@ async function createReport(req: Request, db: D1Database) {
   if (!SOURCES.includes(body?.source as string)) return error(400, "invalid source");
   if (!KINDS.includes(body?.kind as string)) return error(400, "invalid kind");
 
-  const open = await db
-    .prepare("SELECT id FROM cases WHERE bin_id = ? AND status IN ('open', 'assigned') ORDER BY id DESC LIMIT 1")
+  // 先查再新增是兩個語句，同時進來的回報會各開一張案件；
+  // 改成單一 INSERT ... WHERE NOT EXISTS，D1 一次只執行一個寫入語句，就不會重複開案
+  const created = await db
+    .prepare("INSERT INTO cases (bin_id) SELECT ?1 WHERE NOT EXISTS (SELECT 1 FROM cases WHERE bin_id = ?1 AND status IN ('open', 'assigned')) RETURNING id")
     .bind(binId)
     .first<{ id: number }>();
   const caseId =
-    open?.id ??
-    (await db.prepare("INSERT INTO cases (bin_id) VALUES (?) RETURNING id").bind(binId).first<{ id: number }>())!.id;
+    created?.id ??
+    (await db
+      .prepare("SELECT id FROM cases WHERE bin_id = ? AND status IN ('open', 'assigned') ORDER BY id DESC LIMIT 1")
+      .bind(binId)
+      .first<{ id: number }>())!.id;
   await db.prepare("INSERT INTO reports (case_id, source, kind) VALUES (?, ?, ?)").bind(caseId, body!.source, body!.kind).run();
-  return json(await getCase(db, caseId), open ? 200 : 201);
+  return json(await getCase(db, caseId), created ? 201 : 200);
 }
 
 async function listCases(url: URL, db: D1Database) {
