@@ -9,7 +9,7 @@ Vite + React + MapLibre GL（@vis.gl/react-maplibre）。前端 Worker `tongjifa
 | `/bins` | 管理端：桶一覽（使用強度） | `src/admin/Bins.tsx` |
 | `/b/<桶編號>` | 市民回報頁（QR Code 網址） | `src/citizen/Citizen.tsx` |
 | `/map` | 市民地圖：在地圖上找桶、點桶回報 | `src/citizen/BinMap.tsx` |
-| `/trash` | 家用垃圾收受指引 | `src/citizen/Trash.tsx` |
+| `/trash` | 家用垃圾收受指引；停靠點小地圖按了才載入 | `src/citizen/Trash.tsx` |
 
 各路由的載入方式與輪詢間隔見 [../ARCHITECTURE.md](../ARCHITECTURE.md)「前端路由」。`public/sw.js` 只用來顯示「處理完畢」通知，不快取檔案。
 
