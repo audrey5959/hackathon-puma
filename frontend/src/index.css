@@ -35,6 +35,8 @@ button:disabled { opacity: 0.5; }
 .nav a[aria-current="page"] { background: var(--yellow); color: var(--ink); font-weight: 700; }
 .nav a:hover { background: #fff8f426; }
 .nav a[aria-current="page"]:hover { background: var(--yellow); color: var(--ink); }
+/* 部署版號：字小色淡，不搶品牌和導覽；窄螢幕只留短 SHA */
+.version { font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: #fff8f480; white-space: nowrap; }
 .tag { font-size: 12px; background: var(--yellow); color: var(--ink); padding: 2px 8px; border-radius: 6px; }
 .muted { color: var(--muted); font-size: 13px; }
 .err { color: var(--coral); }
@@ -202,6 +204,9 @@ button:disabled { opacity: 0.5; }
 .dashboard .cases a { display: grid; gap: 6px; padding: 12px; color: inherit; text-decoration: none; }
 
 @media (max-width: 760px) {
+  /* 版號留在品牌那一行的右側，模擬資料標籤換到下一行，頁首不會因版號多一行 */
+  .version-time { display: none; }
+  .bar .tag { order: 1; }
   .admin { grid-template-columns: 1fr; grid-template-rows: 50vh auto; height: auto; }
   .panel { border-left: 0; }
   .dashboard { height: auto; }
