@@ -4,15 +4,21 @@ import Citizen from "./citizen/Citizen";
 // 市民回報頁不需要地圖，拆開載入，手機掃 QR Code 時不必下載 MapLibre
 const Admin = lazy(() => import("./admin/Admin"));
 const Dashboard = lazy(() => import("./admin/Dashboard"));
+const BinMap = lazy(() => import("./citizen/BinMap"));
 
 export default function App() {
   const bin = location.pathname.match(/^\/b\/(\d+)$/);
   const dashboard = location.pathname === "/status";
+  const finder = location.pathname === "/map";
   return (
     <>
       <header className="bar">
-        <a href="/" className="brand">桶緝犯</a>
-        {!bin && (
+        <a href={bin || finder ? "/map" : "/"} className="brand">桶緝犯</a>
+        {bin || finder ? (
+          <nav className="nav" aria-label="市民端">
+            <a href="/map" aria-current={finder ? "page" : undefined}>地圖找桶</a>
+          </nav>
+        ) : (
           <nav className="nav" aria-label="管理端">
             <a href="/" aria-current={dashboard ? undefined : "page"}>待辦</a>
             <a href="/status" aria-current={dashboard ? "page" : undefined}>清潔狀態</a>
@@ -24,7 +30,7 @@ export default function App() {
         <Citizen binId={Number(bin[1])} />
       ) : (
         <Suspense fallback={<p className="muted loading">{dashboard ? "載入清潔狀態中…" : "載入地圖中…"}</p>}>
-          {dashboard ? <Dashboard /> : <Admin />}
+          {dashboard ? <Dashboard /> : finder ? <BinMap /> : <Admin />}
         </Suspense>
       )}
     </>

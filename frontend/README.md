@@ -6,8 +6,9 @@ Vite + React + MapLibre GL（@vis.gl/react-maplibre）。前端 Worker `tongjifa
 |---|---|---|
 | `/` | 管理端：地圖、待辦、模擬感測器 | `src/admin/` |
 | `/b/<桶編號>` | 市民回報頁（QR Code 網址） | `src/citizen/` |
+| `/map` | 市民地圖：在地圖上找桶、點桶回報 | `src/citizen/BinMap.tsx` |
 
-共用的 API 呼叫與型別在 `src/shared/api.ts`，桶位讀 `../data/bins.json`。
+共用的 API 呼叫與型別在 `src/shared/api.ts`，MapLibre 設定在 `src/shared/map.ts`（只能從 `lazy()` 載入的頁面引用，`/b/<桶編號>` 不載入地圖），桶位讀 `../data/bins.json`。
 
 ## 指令
 
