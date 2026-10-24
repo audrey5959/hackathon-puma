@@ -107,7 +107,9 @@ sequenceDiagram
 | `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` | `React.lazy` | `GET /api/cases`，2 秒 |
 | `/map` | 市民端：地圖找桶、點桶回報 | `src/citizen/BinMap.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，5 秒 |
 | `/trash` | 市民端：家用垃圾收受指引 | `src/citizen/Trash.tsx` | `React.lazy`（含 `data/trucks.json`） | 無 |
-| `/b/<桶編號>` | 市民回報頁（QR Code 網址）；回報後網址加上 `?case=<案件編號>` 顯示進度 | `src/citizen/Citizen.tsx` | 打包進主程式，不載入地圖 | 回報後 `GET /api/cases/:id` 與 `GET /api/cases`，2 秒 |
+| `/b/<桶編號>` | 市民回報頁（QR Code 網址）；回報後網址加上 `?case=<案件編號>` 顯示進度 | `src/citizen/Citizen.tsx` | 打包進主程式，不載入地圖 | 回報後 `GET /api/cases/:id` 與 `GET /api/cases`，2 秒；案件完成或 404 就停止 |
+
+`/b` 開頭的路徑一律是市民端，沒有桶編號（例如 `/b/`）時請市民重新掃描 QR Code，不會進到管理端。`?case=` 不屬於網址上的桶時，回到這個桶的回報畫面。
 
 管理端網址可以帶 `?bin=<桶編號>`、`?district=<行政區>` 預先選桶與行政區。
 
