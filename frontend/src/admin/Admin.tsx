@@ -5,6 +5,8 @@ import bins from "../../../data/bins.json";
 import candidates from "../../../data/candidates.json";
 import { advance, BINS, binById, clearCases, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
 import { applyChineseLabels, maplibregl, MAP_STYLE, MAX_BOUNDS } from "../shared/map";
+import { WeekChart } from "./WeekChart";
+import { restLevel, usageOf, weekSeries, withLiveLevel } from "./weekCapacity";
 
 const DEMO_DISTRICTS = ["萬華區", "中正區"];
 const DEMO_POOL = BINS.filter((b) => DEMO_DISTRICTS.includes(b.properties.district));
@@ -35,8 +37,7 @@ function boundsOf(pool: typeof BINS): Bounds {
 const DEMO_BOUNDS = boundsOf(DEMO_POOL);
 const districtBounds = (district: string) => (district ? boundsOf(BINS.filter((b) => b.properties.district === district)) : DEMO_BOUNDS);
 
-// 沒有「滿了」案件時，用桶編號算出固定的低水位（12%–45%），重新整理不會變
-const restLevel = (binId: number) => 12 + ((binId * 17) % 34);
+// 沒有「滿了」案件時用固定低水位，公式在 weekCapacity.ts，一週曲線的右端也對齊這個數字
 const FULL_LEVEL = 85;
 function fillLevel(binId: number, cases: Case[]) {
   const full = cases.some((c) => c.bin_id === binId && c.status !== "done" && c.kinds?.split(",").includes("full"));
@@ -364,6 +365,8 @@ export default function Admin() {
   const selectedBin = selected === null ? undefined : binById(selected);
   const selectedCase = selected === null ? undefined : active.get(selected);
   const selectedLevel = selectedBin && cases ? fillLevel(selectedBin.properties.id, cases) : null;
+  const history = selectedBin ? withLiveLevel(weekSeries(selectedBin.properties.id), selectedLevel) : [];
+  const usage = selectedBin ? usageOf(history) : null;
   const shown = visible.filter((c) => matches(c, filter));
 
   async function clearAll() {
@@ -447,15 +450,26 @@ export default function Admin() {
               longitude={selectedBin.geometry.coordinates[0]}
               latitude={selectedBin.geometry.coordinates[1]}
               offset={16}
+              maxWidth="none"
               closeOnClick={false}
               onClose={() => setSelected(null)}
             >
-              <div className="popup">
+              <div className="popup detail">
                 <div className="popup-head">
                   <span className="popup-id">#{selectedBin.properties.id}</span>
                 </div>
                 <div className="popup-title">{selectedBin.properties.address}</div>
                 {selectedLevel !== null && <BinMeter fullPercent={selectedLevel} />}
+                {usage && (
+                  <div className="week">
+                    <div className="row">
+                      <b>過去一週已滿</b>
+                      <span className={`intensity ${usage.band}`}>{usage.label}</span>
+                    </div>
+                    <WeekChart points={history} />
+                    <p className="muted">{usage.detail}</p>
+                  </div>
+                )}
                 {selectedCase && (
                   <div className="muted">
                     案件 #{selectedCase.id}・{STATUS_LABEL[selectedCase.status]}

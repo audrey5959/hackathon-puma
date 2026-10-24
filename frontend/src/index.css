@@ -66,6 +66,7 @@ button:disabled { opacity: 0.5; }
 @media (prefers-reduced-motion: reduce) { .pin.open { animation: none; } }
 
 .map .maplibregl-popup-content { padding: 12px 14px; background: var(--cream); color: var(--ink); border: 1px solid var(--ink); border-radius: 12px; box-shadow: 0 8px 24px #211d1d29; }
+.map .maplibregl-popup-content:has(.popup.detail) { max-width: none !important; }
 .map .maplibregl-popup-close-button { top: 8px; right: 8px; width: 28px; height: 28px; padding: 0; font-size: 18px; line-height: 26px; color: var(--ink); border-radius: 8px; }
 .map .maplibregl-popup-close-button:hover { background: var(--ink); color: var(--cream); }
 .map .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--ink); }
@@ -75,6 +76,7 @@ button:disabled { opacity: 0.5; }
 .map .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--ink); }
 .map .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--ink); }
 .popup { display: grid; gap: 8px; min-width: 220px; font: 14px/1.4 "Noto Sans TC", system-ui, sans-serif; }
+.popup.detail { width: max-content; }
 .popup-head { min-height: 28px; display: flex; align-items: center; }
 .popup-id { font-size: 12px; font-weight: 700; background: var(--yellow); color: var(--ink); padding: 2px 8px; border-radius: 6px; }
 .popup-title { font-weight: 700; }
@@ -82,6 +84,16 @@ button:disabled { opacity: 0.5; }
 .popup-link:hover { color: var(--coral); }
 .popup button { width: 100%; min-height: 40px; background: var(--ink); color: var(--cream); }
 .popup button:hover { background: var(--coral); border-color: var(--coral); color: var(--cream); }
+.week { display: grid; gap: 6px; }
+.week p { margin: 0; }
+.intensity { font-size: 13px; font-weight: 700; }
+.intensity.high { color: var(--coral); }
+.intensity.mid { color: #9a6b00; }
+.week-chart { width: auto; height: auto; display: block; }
+.week-chart .area { fill: var(--coral); fill-opacity: 0.18; stroke: none; }
+.week-chart .line { fill: none; stroke: var(--coral); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.week-chart .threshold { stroke: var(--coral); stroke-width: 1; stroke-dasharray: 3 3; }
+.week-chart text { fill: var(--muted); font-size: 10px; font-family: "Noto Sans TC", system-ui, sans-serif; }
 .bin-meter { display: flex; align-items: center; gap: 8px; }
 .bin-icon { display: grid; justify-items: center; }
 .bin-handle { width: 6px; height: 2px; background: var(--ink); border-radius: 1px 1px 0 0; }
