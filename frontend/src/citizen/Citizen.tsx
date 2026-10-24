@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BINS, binById, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind, type Status } from "../shared/api";
 
 const STEPS: Status[] = ["open", "assigned", "done"];
 const NEAR_M = 500;
+// iOS Safari 分頁、部分舊瀏覽器沒有 Notification；這時只顯示進度條
+const canNotify = typeof Notification !== "undefined";
 const DIRS = ["北", "東北", "東", "東南", "南", "西南", "西", "西北"];
 
 type Bin = (typeof BINS)[number];
@@ -73,6 +75,23 @@ export default function Citizen({ binId }: { binId: number }) {
   const [err, setErr] = useState("");
   const [c] = usePoll<Case>(caseId ? `/api/cases/${caseId}` : null);
   const [cases] = usePoll<Case[]>(caseId ? "/api/cases" : null);
+  const [notify, setNotify] = useState(false);
+  const [perm, setPerm] = useState(() => (canNotify ? Notification.permission : "denied"));
+  const notified = useRef(false);
+
+  useEffect(() => {
+    if (!notify || c?.status !== "done" || notified.current) return;
+    notified.current = true;
+    const title = "垃圾桶處理完畢";
+    const opts = { body: `案件 #${c.id}：${bin?.properties.address ?? ""}`, tag: `case-${c.id}`, data: { url: location.pathname + location.search } };
+    // iOS 主畫面網頁 App、Android Chrome 只顯示從 Service Worker 發出的通知
+    navigator.serviceWorker?.getRegistration()
+      .then((reg) => {
+        if (reg) return reg.showNotification(title, opts);
+        new Notification(title, opts).onclick = () => window.focus();
+      })
+      .catch(() => {});
+  }, [notify, c, bin]);
 
   if (!bin) return <main className="citizen"><p>找不到這個垃圾桶（編號 {binId}）。</p></main>;
 
@@ -88,6 +107,13 @@ export default function Citizen({ binId }: { binId: number }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function askNotify() {
+    navigator.serviceWorker?.register("/sw.js").catch(() => {});
+    const p = await Notification.requestPermission().catch(() => "denied" as const);
+    setPerm(p);
+    setNotify(p === "granted");
   }
 
   return (
@@ -113,6 +139,13 @@ export default function Citizen({ binId }: { binId: number }) {
             ))}
           </ol>
           {c?.team && <p className="muted">處理單位：{c.team}</p>}
+          {canNotify && c && c.status !== "done" && (
+            notify ? (
+              <p className="muted">處理完畢時會通知你，請保持這個頁面開著（可以切到別的分頁）。</p>
+            ) : perm === "denied" ? null : (
+              <button onClick={askNotify}>處理完畢時通知我</button>
+            )
+          )}
         </section>
       )}
       {caseId && <Nearby here={bin} mine={c} cases={cases} />}
