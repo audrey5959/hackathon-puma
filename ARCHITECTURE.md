@@ -105,6 +105,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `/` | 管理端：地圖、待辦、模擬感測器、建議增設圖層 | `src/admin/Admin.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，2 秒 |
 | `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` | `React.lazy` | `GET /api/cases`，2 秒 |
+| `/bins` | 管理端：桶一覽，依使用強度篩選。預設只列容易滿（一週升過 80% 至少 3 次）。次數由桶編號決定，不看當下案件 | `src/admin/Bins.tsx` | `React.lazy` | 無 |
 | `/map` | 市民端：地圖找桶、點桶回報 | `src/citizen/BinMap.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，5 秒 |
 | `/trash` | 市民端：家用垃圾收受指引 | `src/citizen/Trash.tsx` | `React.lazy`（含 `data/trucks.json`） | 無 |
 | `/b/<桶編號>` | 市民回報頁（QR Code 網址）；回報後網址加上 `?case=<案件編號>` 顯示進度 | `src/citizen/Citizen.tsx` | 打包進主程式，不載入地圖 | 回報後 `GET /api/cases/:id` 與 `GET /api/cases`，2 秒；案件完成或 404 就停止 |

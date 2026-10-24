@@ -6,6 +6,7 @@ Vite + React + MapLibre GL（@vis.gl/react-maplibre）。前端 Worker `tongjifa
 |---|---|---|
 | `/` | 管理端：地圖、待辦、模擬感測器 | `src/admin/Admin.tsx` |
 | `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` |
+| `/bins` | 管理端：桶一覽（使用強度） | `src/admin/Bins.tsx` |
 | `/b/<桶編號>` | 市民回報頁（QR Code 網址） | `src/citizen/Citizen.tsx` |
 | `/map` | 市民地圖：在地圖上找桶、點桶回報 | `src/citizen/BinMap.tsx` |
 | `/trash` | 家用垃圾收受指引 | `src/citizen/Trash.tsx` |
