@@ -6,10 +6,11 @@
 
 | 資料夾 | 內容 |
 |---|---|
-| `frontend/` | Vite + React + MapLibre GL（@vis.gl/react-maplibre）；`src/admin/` 管理端（`/`）、`src/citizen/` 市民端（`/b/<桶編號>`、`/map`）、`src/shared/` API 呼叫與型別；`worker/` 把 `/api/*` 轉給後端 |
+| `frontend/` | Vite + React + MapLibre GL（@vis.gl/react-maplibre）；`src/admin/` 管理端（`/`）、`src/citizen/` 市民端（`/b/<桶編號>`、`/map`、`/trash` 家用垃圾指引）、`src/shared/` API 呼叫與型別；`worker/` 把 `/api/*` 轉給後端 |
 | `backend/` | 後端 Worker，四條 `/api/*` 路由，另有一條本機專用的 `DELETE /api/cases`；`migrations/` 是 D1 資料表 |
 | `data/bins.json` | 桶位，前後端共用；`bin_id` 就是 QR Code 網址上的編號 |
 | `data/candidates.json` | 候選點（人流高、附近沒有桶的格子），`uv run etl/candidates.py` 產生，可隨時重跑；管理端地圖的「建議增設」圖層讀這個檔，格式見 ARCHITECTURE.md「資料」 |
+| `data/trucks.json`、`data/itrash.json` | 垃圾車停靠點（`uv run etl/trucks.py` 產生，可隨時重跑）與 iTrash 站點（從官網手抄）；`/trash` 讀這兩個檔，格式見 ARCHITECTURE.md「資料」 |
 | `etl/` | 開放資料轉檔（Python，用 `uv` 執行） |
 
 工具：JS 用 `bun`，Cloudflare 用 `cf`（設定檔是各資料夾的 `cloudflare.config.ts`，不是 `wrangler.jsonc`）。
