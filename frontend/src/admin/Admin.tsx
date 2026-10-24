@@ -35,12 +35,50 @@ function boundsOf(pool: typeof BINS): Bounds {
 const DEMO_BOUNDS = boundsOf(DEMO_POOL);
 const districtBounds = (district: string) => (district ? boundsOf(BINS.filter((b) => b.properties.district === district)) : DEMO_BOUNDS);
 
-// 閒置桶由 GPU 畫成小灰點；進行中的案件改用下方的 DOM Marker 畫，這裡把半徑設成 0 避免重疊
+// 沒有「滿了」案件時，用桶編號算出固定的低水位（12%–45%），重新整理不會變
+const restLevel = (binId: number) => 12 + ((binId * 17) % 34);
+const FULL_LEVEL = 85;
+function fillLevel(binId: number, cases: Case[]) {
+  const full = cases.some((c) => c.bin_id === binId && c.status !== "done" && c.kinds?.split(",").includes("full"));
+  return full ? FULL_LEVEL : restLevel(binId);
+}
+
+// 圖示填的是桶裡已經多滿，每 25% 一格、從桶底往上。顏色看剩餘空間：越滿越紅
+function capacityOf(fullPercent: number) {
+  const remaining = 100 - fullPercent;
+  const index = fullPercent < 25 ? 0 : fullPercent < 50 ? 1 : fullPercent < 75 ? 2 : 3;
+  const cells = fullPercent <= 0 ? 0 : index + 1;
+  const id = (["q4", "q3", "q2", "q1"] as const)[index];
+  return { remaining, cells, id };
+}
+
+function BinMeter({ fullPercent }: { fullPercent: number }) {
+  const { remaining, cells, id } = capacityOf(fullPercent);
+  return (
+    <div className="bin-meter">
+      <span className="bin-icon" aria-hidden="true">
+        <span className="bin-handle" />
+        <span className="bin-lid" />
+        <span className="bin-body">
+          {[0, 1, 2, 3].map((i) => <i key={i} className={i >= 4 - cells ? `on ${id}` : undefined} />)}
+        </span>
+      </span>
+      <span>剩餘 {remaining}%</span>
+    </div>
+  );
+}
+
+// 閒置桶由 GPU 依容量上色；進行中的案件改用下方的 DOM Marker 畫，這裡把半徑設成 0 避免重疊
 const BIN_LAYER: LayerProps = {
   id: "bins",
   type: "circle",
   paint: {
-    "circle-color": ["case", ["boolean", ["feature-state", "hover"], false], "#211d1d", "#8a7f78"],
+    "circle-color": [
+      "case",
+      ["boolean", ["feature-state", "hover"], false],
+      "#211d1d",
+      ["step", ["coalesce", ["feature-state", "level"], 20], "#2f9e4f", 25, "#c4a017", 50, "#e07a2f", 75, "#d64545"],
+    ],
     // zoom 只能放在最外層的 interpolate，feature-state 判斷放進每個 stop
     "circle-radius": [
       "interpolate", ["linear"], ["zoom"],
@@ -227,6 +265,7 @@ export default function Admin() {
   const [toast, setToast] = useState<Case | null>(null);
   const known = useRef<Set<number> | null>(null);
   const activeIds = useRef(new Set<number>());
+  const levels = useRef(new Map<number, number>());
 
   const inDistrict = (c: Case) => !district || binById(c.bin_id)?.properties.district === district;
   const active = new Map((cases ?? []).filter((c) => c.status !== "done").map((c) => [c.bin_id, c]));
@@ -239,6 +278,20 @@ export default function Admin() {
     setSelected(binId);
     map.flyTo({ center: bin.geometry.coordinates as [number, number], zoom: Math.max(map.getZoom(), 16), duration: 800 });
   }
+
+  // 容量跟著案件變；只改有差的桶，輪詢時不重畫整個圖層
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!loaded || !map || !cases) return;
+    const seen = levels.current;
+    const binsToPaint = seen.size === 0 ? BINS.map((b) => b.properties.id) : [...seen.keys()];
+    for (const id of binsToPaint) {
+      const level = fillLevel(id, cases);
+      if (seen.get(id) === level) continue;
+      map.setFeatureState({ source: "bins", id }, { level });
+      seen.set(id, level);
+    }
+  }, [cases, loaded]);
 
   // 只更新狀態有變的桶，輪詢時不重畫整個圖層
   useEffect(() => {
@@ -310,6 +363,7 @@ export default function Admin() {
 
   const selectedBin = selected === null ? undefined : binById(selected);
   const selectedCase = selected === null ? undefined : active.get(selected);
+  const selectedLevel = selectedBin && cases ? fillLevel(selectedBin.properties.id, cases) : null;
   const shown = visible.filter((c) => matches(c, filter));
 
   async function clearAll() {
@@ -363,6 +417,7 @@ export default function Admin() {
           {[...active.values()].map((c) => {
             const [lon, lat] = binById(c.bin_id)!.geometry.coordinates;
             const hot = hovered === c.bin_id || selected === c.bin_id;
+            const level = capacityOf(fillLevel(c.bin_id, cases ?? [])).id;
             return (
               <Marker
                 key={c.bin_id}
@@ -374,7 +429,7 @@ export default function Admin() {
                 }}
               >
                 <div
-                  className={`pin ${c.status}${hot ? " hot" : ""}${inDistrict(c) ? "" : " dim"}`}
+                  className={`pin ${c.status} ${level}${hot ? " hot" : ""}${inDistrict(c) ? "" : " dim"}`}
                   onMouseEnter={() => setHovered(c.bin_id)}
                   onMouseLeave={() => setHovered(null)}
                 >
@@ -396,13 +451,17 @@ export default function Admin() {
               onClose={() => setSelected(null)}
             >
               <div className="popup">
-                <b>#{selectedBin.properties.id}</b> {selectedBin.properties.address}
+                <div className="popup-head">
+                  <span className="popup-id">#{selectedBin.properties.id}</span>
+                </div>
+                <div className="popup-title">{selectedBin.properties.address}</div>
+                {selectedLevel !== null && <BinMeter fullPercent={selectedLevel} />}
                 {selectedCase && (
                   <div className="muted">
                     案件 #{selectedCase.id}・{STATUS_LABEL[selectedCase.status]}
                   </div>
                 )}
-                <a href={`/b/${selectedBin.properties.id}`} target="_blank">開啟市民回報頁（QR Code 網址）</a>
+                <a className="popup-link" href={`/b/${selectedBin.properties.id}`} target="_blank">開啟市民回報頁<span className="muted">QR Code 網址</span></a>
                 <button onClick={() => simulateSensor(selectedBin.properties.id)}>模擬感測器 85% 滿</button>
               </div>
             </Popup>
@@ -426,7 +485,6 @@ export default function Admin() {
         <div className="legend">
           <span><i className="dot open" />待處理</span>
           <span><i className="dot assigned" />已指派</span>
-          <span><i className="dot idle" />正常</span>
           <span className="muted"><SensorIcon />感測器</span>
           <span className="muted"><CitizenIcon />民眾</span>
           <label className="legend-toggle">
@@ -441,6 +499,20 @@ export default function Admin() {
               ))}
             </span>
           )}
+        </div>
+
+        <div className="scale">
+          <span className="scale-name">剩餘</span>
+          <div className="scale-track">
+            <div className="scale-labels">
+              <span>100</span>
+              <span>75</span>
+              <span>50</span>
+              <span>25</span>
+              <span>0</span>
+            </div>
+            <div className="scale-bar" />
+          </div>
         </div>
 
         {toast && (
