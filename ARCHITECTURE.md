@@ -22,7 +22,7 @@
 
 | 層 | 選擇 | 備註 |
 |---|---|---|
-| 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的兩個路由 |
+| 前端 | Vite 8、React 19、TypeScript | `frontend/`；市民端（`src/citizen/`）與管理端（`src/admin/`）是同一份程式的不同路由，見「前端路由」 |
 | 地圖 | MapLibre GL JS 6.15、@vis.gl/react-maplibre 8.1.3 | WebGL 繪圖；桶位是一個 GeoJSON source，案件狀態用 feature-state 更新，輪詢時不重畫整個圖層。管理端用 `React.lazy` 拆開，市民回報頁不載入地圖 |
 | 底圖 | [OpenFreeMap](https://openfreemap.org/) positron 向量圖磚 | 免金鑰、無流量限制、可商用；必須標示 © OpenMapTiles 與 © OpenStreetMap，MapLibre 會自動加上。地名改成只顯示正體中文 |
 | 後端 | Cloudflare Worker | `backend/`；只處理 `/api/*`，不放靜態檔 |
@@ -86,19 +86,39 @@ sequenceDiagram
     loop 每 2 秒
         C->>W: GET /api/cases/:id
         W-->>C: 最新狀態
+        C->>W: GET /api/cases
+        W-->>C: 案件列表（算附近可以丟的桶）
     end
 ```
 
 模擬感測器是管理端的一個按鈕，呼叫和民眾回報同一支 API，只是 `source` 不同。
+
+市民回報後的進度頁除了自己的案件，也每 2 秒抓完整的案件列表，用來列出附近可以丟的桶（排除有未完成「滿了」「沒有桶」案件的桶）。列表沒有分頁，案件數變多時回應會跟著變大。
+
+**處理完畢通知**：市民在進度頁按「處理完畢時通知我」，頁面註冊 `frontend/public/sw.js` 並請求通知權限；輪詢到案件變成 `done` 時發一次瀏覽器通知。iOS 主畫面網頁 App 與 Android Chrome 只顯示從 Service Worker 發出的通知，所以有註冊時改用 `registration.showNotification()`。`sw.js` 只處理點擊通知回到頁面，沒有 Web Push、不快取任何檔案，頁面要保持開著（可以切到別的分頁）才收得到。
+
+## 前端路由
+
+前端沒有用 router 套件，`frontend/src/App.tsx` 直接看 `location.pathname`。前端 Worker 設定 single-page-application，下列路徑都回傳同一份 `index.html`。
+
+| 路徑 | 畫面 | 程式 | 載入 | 輪詢 |
+|---|---|---|---|---|
+| `/` | 管理端：地圖、待辦、模擬感測器、建議增設圖層 | `src/admin/Admin.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，2 秒 |
+| `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` | `React.lazy` | `GET /api/cases`，2 秒 |
+| `/map` | 市民端：地圖找桶、點桶回報 | `src/citizen/BinMap.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，5 秒 |
+| `/trash` | 市民端：家用垃圾收受指引 | `src/citizen/Trash.tsx` | `React.lazy`（含 `data/trucks.json`） | 無 |
+| `/b/<桶編號>` | 市民回報頁（QR Code 網址）；回報後網址加上 `?case=<案件編號>` 顯示進度 | `src/citizen/Citizen.tsx` | 打包進主程式，不載入地圖 | 回報後 `GET /api/cases/:id` 與 `GET /api/cases`，2 秒 |
+
+管理端網址可以帶 `?bin=<桶編號>`、`?district=<行政區>` 預先選桶與行政區。
 
 ## API
 
 | 方法與路徑 | 輸入 | 輸出 | 錯誤 |
 |---|---|---|---|
 | `POST /api/reports` | `bin_id`、`source`（`sensor`／`citizen`）、`kind`（`full`／`dirty`／`missing`） | 合併後或新開的案件 | `bin_id` 不存在或欄位值不合法回 400 |
-| `GET /api/cases` | 選填 `status` | 案件列表，新的在前 | |
+| `GET /api/cases` | 選填 `status` | 案件列表，新的在前 | `status` 不是 `open`／`assigned`／`done` 回 400 |
 | `GET /api/cases/:id` | | 單一案件 | 不存在回 404 |
-| `PATCH /api/cases/:id` | `status`（`assigned`／`done`） | 更新後的案件 | 狀態只能往前走（`open` → `assigned` → `done`），否則回 409 |
+| `PATCH /api/cases/:id` | `status`（`assigned`／`done`）、選填 `team`（指派的清潔隊，預設「清潔隊」） | 更新後的案件 | `status` 不合法回 400；案件不存在回 404；狀態只能往前走（`open` → `assigned` → `done`，可以從 `open` 直接到 `done`），否則回 409 |
 | `DELETE /api/cases` | | 清空所有案件與回報 | 只在 `localhost` 生效，正式網址回 404 |
 
 **合併規則**：同一個 `bin_id` 已有未完成（`open` 或 `assigned`）的案件時，新回報掛到那個案件上，不另開新案，避免重複派工。
@@ -120,7 +140,7 @@ sequenceDiagram
   - `reasons`：點開格子要顯示的原因，例如「捷運台北車站（3 個出口），日均進出約 11.4 萬人次」「最近的桶在 340 m 外（#233 …）」
 - 候選點的人流來源：捷運各站分時進出量（一個月約 300 MB，轉檔時串流加總，不進版控）、捷運出入口座標（Big5）、YouBike 2.0 站點。站的進出量平均分給該站各出入口；格子 500m 內沒有臺北市 YouBike 站就視為新北，不列入。
 - 垃圾車停靠點 `data/trucks.json`（`etl/trucks.py` 產生）：臺北市垃圾車點位路線資料，全市 12 區約 4,000 個停靠點（約 1 MB，`/trash` 延遲載入，gzip 後約 100 KB）。每個停靠點一個 Point，properties 是 `district`、`village`、`address`、`arrive`、`leave`（`HH:MM`）、`route`；同一地點有多個車次時各算一筆。市民端 `/trash` 預設以萬華區西門里為位置（不在載入時跳出定位授權），可以按「使用我的位置」，或改選「行政區 里」（以該里停靠點的平均位置為準，不需要地址轉座標服務）；最近的停靠點超過 3 km 就視為不在臺北市，請使用者改選。列出所選時間起 60 分鐘內到站、最近的 10 個停靠點，附 Google 地圖步行導航。垃圾種類（一般垃圾與廚餘、平面類、立體類）的收運日寫死在 `frontend/src/citizen/Trash.tsx`，依據臺北市環保局的分天分類規定，選到當天不收的種類就不列垃圾車。
-- iTrash 站點 `data/itrash.json`：從 [iTrash 官網](https://www.itrash.com.tw/pages/site) 手抄的 18 個站點（站名、地址、有沒有垃圾收集機與瓶罐收集機），沒有座標，導航連結直接帶地址。因為沒有座標，不依距離排序。
+- iTrash 站點 `data/itrash.json`：從 [iTrash 官網](https://www.itrash.com.tw/pages/site) 手抄的 18 個站點（站名、地址、有沒有垃圾收集機與瓶罐收集機）。`lon`、`lat` 取自官網內嵌的 Google My Maps（[KML](https://www.google.com/maps/d/kml?mid=1lOax2IXhmTioMRd9YsKsPXo9voOX73w&forcekml=1)），地圖上沒有文德二號公園站，這站是 `null`。`/trash` 依距離排序，先列最近 3 站；2 km 內沒有站時會說明最近的一站在哪一區、多遠（萬華、中正都沒有站）。
 
 **真實與模擬**
 
@@ -128,7 +148,7 @@ sequenceDiagram
 |---|---|
 | 桶位、捷運站、垃圾車點位 | 真實（開放資料） |
 | 候選點 | 由開放資料計算（捷運 2026-09 進出量、YouBike 站點）；人流指數的權重是我們訂的 |
-| 剩餘容量 | 模擬，在前端計算 |
+| 剩餘容量、一週容量曲線、使用強度 | 模擬，在前端計算。曲線依桶編號固定，右端跟著當下水位；使用強度是一週內升過 80% 的次數 |
 | 回報、案件、處理紀錄 | 模擬（現場 Demo 時即時產生） |
 
 桶位開放資料的每一筆是座標點，不是桶數，同一地點可能有好幾筆；只能拿來看位置，不要加總成「臺北有幾個桶」。數量請引用官方數字並註明單位（一組兩座），各年份與單位的整理見 [臺北行人清潔箱數量摘要](https://data.bin.ianwu.net/)。

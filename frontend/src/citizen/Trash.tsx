@@ -8,6 +8,9 @@ const DEFAULT_PLACE = "萬華區 西門里";
 const FAR_M = 3000;
 const WINDOW_MIN = 60;
 const LIMIT = 10;
+// iTrash 只有 18 站，先列最近的幾站，其餘收起來
+const ITRASH_LIMIT = 3;
+const ITRASH_NEAR_M = 2000;
 const WEEKDAY = "日一二三四五六";
 
 // 臺北市環保局：週三、週日不收；平面類週一、五，立體類週二、四、六
@@ -22,6 +25,8 @@ type Kind = keyof typeof KINDS;
 const toMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3));
 const nowHHMM = () => new Date().toTimeString().slice(0, 5);
 const days = (ds: readonly number[]) => "週" + ds.map((d) => WEEKDAY[d]).join("、");
+const km = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
+const areaOf = (address: string) => address.match(/^(?:臺北市|新北市)(.+?區)/)?.[1] ?? "";
 const mapsUrl = (destination: string) =>
   `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=walking`;
 
@@ -66,7 +71,11 @@ export default function Trash() {
     .slice(0, LIMIT);
   const far = Math.min(...trucks.features.map((f) => distM(here, f.geometry.coordinates))) > FAR_M;
   const machine = k.itrash;
-  const sites = machine ? itrash.filter((s) => s[machine]) : [];
+  // 官網內嵌地圖缺座標的站排在最後
+  const sites = (machine ? itrash.filter((s) => s[machine]) : [])
+    .map((s) => ({ ...s, d: s.lon === null || s.lat === null ? null : distM(here, [s.lon, s.lat]) }))
+    .sort((a, b) => (a.d ?? Infinity) - (b.d ?? Infinity));
+  const nearest = sites[0]?.d ?? null;
 
   function locate() {
     setLocErr("");
@@ -137,18 +146,40 @@ export default function Trash() {
             以下是官網列出的{machine === "trash" ? "垃圾收集機" : "瓶罐收集機"}站點，
             來源：<a href="https://www.itrash.com.tw/pages/site" target="_blank" rel="noreferrer">iTrash 官網</a>。
           </p>
-          <ol className="stops">
-            {sites.map((s) => (
-              <li key={s.name}>
-                <strong>{s.name}</strong>
-                <p>{s.address}</p>
-                <a href={mapsUrl(s.address)} target="_blank" rel="noreferrer">開啟 Google 地圖導航</a>
-              </li>
-            ))}
-          </ol>
+          {nearest !== null && nearest > ITRASH_NEAR_M && (
+            <p>
+              {mine ? "你的位置" : place}附近 {km(ITRASH_NEAR_M)} 內沒有 iTrash，最近的是{areaOf(sites[0].address)}的{sites[0].name}，約 {km(nearest)}。
+            </p>
+          )}
+          <ItrashList sites={sites.slice(0, ITRASH_LIMIT)} />
+          {sites.length > ITRASH_LIMIT && (
+            <details>
+              <summary>其他 {sites.length - ITRASH_LIMIT} 站</summary>
+              <ItrashList sites={sites.slice(ITRASH_LIMIT)} />
+            </details>
+          )}
         </section>
       )}
       <p className="muted">垃圾車點位為臺北市開放資料。</p>
     </main>
+  );
+}
+
+type Site = (typeof itrash)[number] & { d: number | null };
+
+function ItrashList({ sites }: { sites: Site[] }) {
+  return (
+    <ol className="stops">
+      {sites.map((s) => (
+        <li key={s.name}>
+          <div className="row">
+            <strong>{s.name}</strong>
+            {s.d !== null && <span className="muted">{km(s.d)}</span>}
+          </div>
+          <p>{s.address}</p>
+          <a href={mapsUrl(s.lat === null ? s.address : `${s.lat},${s.lon}`)} target="_blank" rel="noreferrer">開啟 Google 地圖導航</a>
+        </li>
+      ))}
+    </ol>
   );
 }
