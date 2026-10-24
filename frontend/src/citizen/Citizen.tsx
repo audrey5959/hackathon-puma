@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { BINS, binById, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind, type Status } from "../shared/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BINS, binById, HttpError, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind, type Status } from "../shared/api";
 
 const STEPS: Status[] = ["open", "assigned", "done"];
 const NEAR_M = 500;
@@ -68,22 +68,30 @@ function Nearby({ here, mine, cases }: { here: Bin; mine: Case | null; cases: Ca
   );
 }
 
-export default function Citizen({ binId }: { binId: number }) {
-  const bin = binById(binId);
-  const [caseId, setCaseId] = useState(() => new URLSearchParams(location.search).get("case"));
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const [c] = usePoll<Case>(caseId ? `/api/cases/${caseId}` : null);
-  const [cases] = usePoll<Case[]>(caseId ? "/api/cases" : null);
+// 案件狀態只會往前走，完成後不會再變，停止輪詢不會漏掉更新
+const isDone = (c: Case) => c.status === "done";
+
+// 以 caseId 為 key 掛載：換案件時輪詢資料從頭來，不會沿用上一個案件的狀態
+function Progress({ bin, caseId, onReset }: { bin: Bin; caseId: string; onReset: (notice?: string) => void }) {
+  const [c, , cErr] = usePoll<Case>(`/api/cases/${encodeURIComponent(caseId)}`, 2000, isDone);
   const [notify, setNotify] = useState(false);
   const [perm, setPerm] = useState(() => (canNotify ? Notification.permission : "denied"));
   const notified = useRef(false);
+  const gone = cErr instanceof HttpError && cErr.status === 404;
+  const wrongBin = c !== null && c.bin_id !== bin.properties.id;
+  // 附近桶位只在案件處理中顯示，完成或查無案件就不再拉列表
+  const [cases] = usePoll<Case[]>(gone || wrongBin || c?.status === "done" ? null : "/api/cases");
+
+  // 網址上的 case 是別的桶的：進度和地址會對不上，回到這個桶的回報畫面
+  useEffect(() => {
+    if (wrongBin) onReset(`案件 #${c.id} 不是這個桶的案件，請重新回報。`);
+  }, [wrongBin, c, onReset]);
 
   useEffect(() => {
     if (!notify || c?.status !== "done" || notified.current) return;
     notified.current = true;
     const title = "垃圾桶處理完畢";
-    const opts = { body: `案件 #${c.id}：${bin?.properties.address ?? ""}`, tag: `case-${c.id}`, data: { url: location.pathname + location.search } };
+    const opts = { body: `案件 #${c.id}：${bin.properties.address}`, tag: `case-${c.id}`, data: { url: location.pathname + location.search } };
     // iOS 主畫面網頁 App、Android Chrome 只顯示從 Service Worker 發出的通知
     navigator.serviceWorker?.getRegistration()
       .then((reg) => {
@@ -93,11 +101,74 @@ export default function Citizen({ binId }: { binId: number }) {
       .catch(() => {});
   }, [notify, c, bin]);
 
+  async function askNotify() {
+    navigator.serviceWorker?.register("/sw.js").catch(() => {});
+    const p = await Notification.requestPermission().catch(() => "denied" as const);
+    setPerm(p);
+    setNotify(p === "granted");
+  }
+
+  if (gone) {
+    return (
+      <section className="progress">
+        <p>找不到案件 #{caseId}。</p>
+        <button onClick={() => onReset()}>回報這個桶</button>
+      </section>
+    );
+  }
+  // 斷線時 usePoll 會繼續重試，不當成查無案件
+  if (!c || wrongBin) return <p className="muted">{cErr ? "連線不穩，重試中…" : "載入中…"}</p>;
+
+  const done = c.status === "done";
+  return (
+    <>
+      <section className="progress">
+        <p>已收到回報，案件 #{c.id}</p>
+        <ol>
+          {STEPS.map((s) => (
+            <li key={s} className={STEPS.indexOf(c.status) >= STEPS.indexOf(s) ? "on" : ""}>{STATUS_LABEL[s]}</li>
+          ))}
+        </ol>
+        {c.team && <p className="muted">處理單位：{c.team}</p>}
+        {cErr !== null && <p className="muted">連線不穩，進度可能不是最新的，重試中…</p>}
+        {done ? (
+          <>
+            <p>這個桶處理好了，可以使用。</p>
+            <button onClick={() => onReset()}>還有問題？再回報一次</button>
+          </>
+        ) : canNotify && (
+          notify ? (
+            <p className="muted">處理完畢時會通知你，請保持這個頁面開著（可以切到別的分頁）。</p>
+          ) : perm === "denied" ? null : (
+            <button onClick={askNotify}>處理完畢時通知我</button>
+          )
+        )}
+      </section>
+      {!done && <Nearby here={bin} mine={c} cases={cases} />}
+    </>
+  );
+}
+
+export default function Citizen({ binId }: { binId: number }) {
+  const bin = binById(binId);
+  const [caseId, setCaseId] = useState(() => new URLSearchParams(location.search).get("case"));
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [notice, setNotice] = useState("");
+
+  // 回到回報畫面，網址的 ?case= 一起拿掉，重新整理才不會又回到同一個案件
+  const reset = useCallback((msg = "") => {
+    history.replaceState(null, "", location.pathname);
+    setCaseId(null);
+    setNotice(msg);
+  }, []);
+
   if (!bin) return <main className="citizen"><p>找不到這個垃圾桶（編號 {binId}）。</p></main>;
 
   async function send(kind: Kind) {
     setBusy(true);
     setErr("");
+    setNotice("");
     try {
       const created = await report(binId, "citizen", kind);
       history.replaceState(null, "", `?case=${created.id}`);
@@ -109,19 +180,13 @@ export default function Citizen({ binId }: { binId: number }) {
     }
   }
 
-  async function askNotify() {
-    navigator.serviceWorker?.register("/sw.js").catch(() => {});
-    const p = await Notification.requestPermission().catch(() => "denied" as const);
-    setPerm(p);
-    setNotify(p === "granted");
-  }
-
   return (
     <main className="citizen">
       <p className="muted">{bin.properties.district}・桶 #{binId}</p>
       <h1>{bin.properties.address}</h1>
       {!caseId ? (
         <>
+          {notice && <p className="err">{notice}</p>}
           <p>這個桶怎麼了？</p>
           <div className="kinds">
             {(Object.keys(KIND_LABEL) as Kind[]).map((k) => (
@@ -131,24 +196,8 @@ export default function Citizen({ binId }: { binId: number }) {
           {err && <p className="err">回報失敗：{err}</p>}
         </>
       ) : (
-        <section className="progress">
-          <p>已收到回報，案件 #{caseId}</p>
-          <ol>
-            {STEPS.map((s) => (
-              <li key={s} className={c && STEPS.indexOf(c.status) >= STEPS.indexOf(s) ? "on" : ""}>{STATUS_LABEL[s]}</li>
-            ))}
-          </ol>
-          {c?.team && <p className="muted">處理單位：{c.team}</p>}
-          {canNotify && c && c.status !== "done" && (
-            notify ? (
-              <p className="muted">處理完畢時會通知你，請保持這個頁面開著（可以切到別的分頁）。</p>
-            ) : perm === "denied" ? null : (
-              <button onClick={askNotify}>處理完畢時通知我</button>
-            )
-          )}
-        </section>
+        <Progress key={caseId} bin={bin} caseId={caseId} onReset={reset} />
       )}
-      {caseId && <Nearby here={bin} mine={c} cases={cases} />}
     </main>
   );
 }

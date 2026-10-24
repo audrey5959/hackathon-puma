@@ -21,7 +21,9 @@ function Version() {
 }
 
 export default function App() {
-  const bin = location.pathname.match(/^\/b\/(\d+)$/);
+  // /b 開頭一律是市民端：QR Code 網址多一個斜線或少了編號，也不能讓市民進到管理端
+  const bin = /^\/b(\/|$)/i.test(location.pathname);
+  const binId = location.pathname.match(/^\/b\/(\d+)\/?$/i)?.[1];
   const dashboard = location.pathname === "/status";
   const finder = location.pathname === "/map";
   const trash = location.pathname === "/trash";
@@ -44,7 +46,11 @@ export default function App() {
         <Version />
       </header>
       {bin ? (
-        <Citizen binId={Number(bin[1])} />
+        binId ? (
+          <Citizen binId={Number(binId)} />
+        ) : (
+          <main className="citizen"><p>網址不完整，請重新掃描桶上的 QR Code。</p></main>
+        )
       ) : trash ? (
         <Suspense fallback={<p className="muted loading">載入中…</p>}>
           <Trash />
