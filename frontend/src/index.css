@@ -94,8 +94,8 @@ button:disabled { opacity: 0.5; }
 @media (hover: hover) {
   .popup button:hover { background: var(--coral); border-color: var(--coral); color: var(--cream); }
 }
-.week { display: grid; gap: 6px; }
-.week p { margin: 0; }
+.week-capacity { display: grid; gap: 6px; }
+.week-capacity p { margin: 0; }
 .intensity { font-size: 13px; font-weight: 700; }
 .intensity.high { color: var(--coral); }
 .intensity.mid { color: #9a6b00; }
