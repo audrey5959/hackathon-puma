@@ -355,7 +355,7 @@ export default function Admin() {
                 <div className="popup-title">{selectedBin.properties.address}</div>
                 {selectedLevel !== null && <BinMeter fullPercent={selectedLevel} />}
                 {usage && (
-                  <div className="week">
+                  <div className="week-capacity">
                     <div className="row">
                       <b>過去一週已滿</b>
                       <span className={`intensity ${usage.band}`}>{usage.label}</span>
