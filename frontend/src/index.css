@@ -227,6 +227,7 @@ button:disabled { opacity: 0.5; }
 /* 市民地圖 /map：地圖占滿頁首以下的畫面 */
 #root:has(.finder) { display: flex; flex-direction: column; height: 100dvh; }
 .finder { position: relative; flex: 1; min-height: 0; }
+.dot.idle { background: #8a7f78; border-radius: 50%; }
 .dot.urgent { background: var(--coral); border-radius: 50%; }
 .dot.dirty { background: #d9a400; border-radius: 50%; }
 .me { width: 16px; height: 16px; border-radius: 50%; background: #2f6fde; border: 3px solid #fff; box-shadow: 0 0 0 6px #2f6fde33, 0 1px 4px #0005; }
