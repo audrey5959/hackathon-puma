@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import itrash from "../../../data/itrash.json";
 import trucks from "../../../data/trucks.json";
 import Combobox from "./Combobox";
+
+// 小地圖另拆。Trash 本身不引用 MapLibre，按了「在地圖上看」才下載
+const StopMap = lazy(() => import("./StopMap"));
 
 // 預設不跳定位授權，先用示範區的西門里
 const DEFAULT_PLACE = "萬華區 西門里";
@@ -105,6 +108,7 @@ export default function Trash() {
   const [time, setTime] = useState("");
   const [now, setNow] = useState(nowMin);
   const [today] = useState(() => new Date().getDay());
+  const [mapOn, setMapOn] = useState(false);
   useEffect(() => {
     const timer = setInterval(() => setNow(nowMin()), 30_000);
     return () => clearInterval(timer);
@@ -217,6 +221,16 @@ export default function Trash() {
         <section className="nearby">
           <h2>{heading}</h2>
           {wide && <p className="muted">{NEAR_M} m 內沒有停靠點，以下是較遠的。</p>}
+          {list.length > 0 && (
+            <button className="map-toggle" aria-expanded={mapOn} aria-controls="stop-map" onClick={() => setMapOn((open) => !open)}>
+              {mapOn ? "收起地圖" : "在地圖上看"}
+            </button>
+          )}
+          {mapOn && list.length > 0 && (
+            <Suspense fallback={<p className="muted">載入地圖中…</p>}>
+              <StopMap here={here} hereLabel={mine ? "你的位置" : place} stops={list} />
+            </Suspense>
+          )}
           <ol>
             {list.map((s, i) => (
               <li key={`${s.route}-${s.arrive}-${s.address}`} className={i === 0 ? "first" : ""}>

@@ -107,7 +107,7 @@ sequenceDiagram
 | `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` | `React.lazy` | `GET /api/cases`，2 秒 |
 | `/bins` | 管理端：桶一覽，依使用強度篩選。預設只列容易滿（一週升過 80% 至少 3 次）。次數由桶編號決定，不看當下案件 | `src/admin/Bins.tsx` | `React.lazy` | 無 |
 | `/map` | 市民端：地圖找桶、點桶回報 | `src/citizen/BinMap.tsx` | `React.lazy`（含 MapLibre） | `GET /api/cases`，5 秒 |
-| `/trash` | 市民端：家用垃圾收受指引 | `src/citizen/Trash.tsx` | `React.lazy`（含 `data/trucks.json`） | 無 |
+| `/trash` | 市民端：家用垃圾收受指引 | `src/citizen/Trash.tsx` | `React.lazy`（含 `data/trucks.json`）。小地圖另 lazy，按了才載入 MapLibre | 無 |
 | `/b/<桶編號>` | 市民回報頁（QR Code 網址）；回報後網址加上 `?case=<案件編號>` 顯示進度 | `src/citizen/Citizen.tsx` | 打包進主程式，不載入地圖 | 回報後 `GET /api/cases/:id` 與 `GET /api/cases`，2 秒；案件完成或 404 就停止 |
 
 `/b` 開頭的路徑一律是市民端，沒有桶編號（例如 `/b/`）時請市民重新掃描 QR Code，不會進到管理端。`?case=` 不屬於網址上的桶時，回到這個桶的回報畫面。
@@ -142,7 +142,7 @@ sequenceDiagram
   - `district`、`mrt_daily`（格內出入口的日均進出人次）、`mrt_exits`、`youbike_stations`、`youbike_docks`、`nearest_bin_m`、`nearest_bin_id`
   - `reasons`：點開格子要顯示的原因，例如「捷運台北車站（3 個出口），日均進出約 11.4 萬人次」「最近的桶在 340 m 外（#233 …）」
 - 候選點的人流來源：捷運各站分時進出量（一個月約 300 MB，轉檔時串流加總，不進版控）、捷運出入口座標（Big5）、YouBike 2.0 站點。站的進出量平均分給該站各出入口；格子 500m 內沒有臺北市 YouBike 站就視為新北，不列入。
-- 垃圾車停靠點 `data/trucks.json`（`etl/trucks.py` 產生）：臺北市垃圾車點位路線資料，全市 12 區約 4,000 個停靠點（約 1 MB，`/trash` 延遲載入，gzip 後約 100 KB）。每個停靠點一個 Point，properties 是 `district`、`village`、`address`、`arrive`、`leave`（`HH:MM`）、`route`；同一地點有多個車次時各算一筆。市民端 `/trash` 預設以萬華區西門里為位置（不在載入時跳出定位授權），可以按「使用我的位置」，或改選「行政區 里」（以該里停靠點的平均位置為準，不需要地址轉座標服務）；最近的停靠點超過 3 km 就視為不在臺北市，請使用者改選。列出所選時間起 60 分鐘內到站、最近的 10 個停靠點，附 Google 地圖步行導航。垃圾種類（一般垃圾與廚餘、平面類、立體類）的收運日寫死在 `frontend/src/citizen/Trash.tsx`，依據臺北市環保局的分天分類規定，選到當天不收的種類就不列垃圾車。
+- 垃圾車停靠點 `data/trucks.json`（`etl/trucks.py` 產生）：臺北市垃圾車點位路線資料，全市 12 區約 4,000 個停靠點（約 1 MB，`/trash` 延遲載入，gzip 後約 100 KB）。每個停靠點一個 Point，properties 是 `district`、`village`、`address`、`arrive`、`leave`（`HH:MM`）、`route`；同一地點有多個車次時各算一筆。市民端 `/trash` 預設以萬華區西門里為位置（不在載入時跳出定位授權），可以按「使用我的位置」，或改選「行政區 里」（以該里停靠點的平均位置為準，不需要地址轉座標服務）；最近的停靠點超過 3 km 就視為不在臺北市，請使用者改選。列出所選時間起 60 分鐘內到站、最近的 10 個停靠點，附 Google 地圖步行導航。清單上方可按「在地圖上看」才載入 MapLibre（`src/citizen/StopMap.tsx`），標出目前位置與清單上的停靠點，第一班放大。垃圾種類（一般垃圾與廚餘、平面類、立體類）的收運日寫死在 `frontend/src/citizen/Trash.tsx`，依據臺北市環保局的分天分類規定，選到當天不收的種類就不列垃圾車。
 - iTrash 站點 `data/itrash.json`：從 [iTrash 官網](https://www.itrash.com.tw/pages/site) 手抄的 18 個站點（站名、地址、有沒有垃圾收集機與瓶罐收集機）。`lon`、`lat` 取自官網內嵌的 Google My Maps（[KML](https://www.google.com/maps/d/kml?mid=1lOax2IXhmTioMRd9YsKsPXo9voOX73w&forcekml=1)），地圖上沒有文德二號公園站，這站是 `null`。`/trash` 依距離排序，先列最近 3 站；2 km 內沒有站時會說明最近的一站在哪一區、多遠（萬華、中正都沒有站）。
 
 **真實與模擬**

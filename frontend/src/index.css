@@ -186,6 +186,10 @@ button:disabled { opacity: 0.5; }
 .nearby li > a:hover { border-color: var(--ink); }
 .nearby .first a { padding: 16px; border: 2px solid var(--ink); font-size: 17px; }
 .nearby .tag { justify-self: start; }
+.map-toggle { margin-top: 12px; }
+.stop-map { height: 240px; margin-top: 8px; border: 1px solid var(--ink); border-radius: 12px; overflow: hidden; }
+.stop-pin { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--cream); border: 2px solid var(--cream); font-size: 12px; font-weight: 700; box-shadow: 0 1px 4px #0005; }
+.stop-pin.first { width: 32px; height: 32px; background: var(--coral); font-size: 15px; box-shadow: 0 0 0 6px #db6a4133, 0 1px 4px #0005; }
 .citizen input[type="time"], .citizen select { min-height: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: 9px; background: var(--cream); font: inherit; }
 .citizen .chips { flex-wrap: wrap; }
 /* /trash：行政區、里兩層可搜尋的下拉加定位按鈕，手機寬度擠在同一行 */
