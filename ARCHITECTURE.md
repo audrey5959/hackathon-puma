@@ -140,7 +140,7 @@ sequenceDiagram
   - `reasons`：點開格子要顯示的原因，例如「捷運台北車站（3 個出口），日均進出約 11.4 萬人次」「最近的桶在 340 m 外（#233 …）」
 - 候選點的人流來源：捷運各站分時進出量（一個月約 300 MB，轉檔時串流加總，不進版控）、捷運出入口座標（Big5）、YouBike 2.0 站點。站的進出量平均分給該站各出入口；格子 500m 內沒有臺北市 YouBike 站就視為新北，不列入。
 - 垃圾車停靠點 `data/trucks.json`（`etl/trucks.py` 產生）：臺北市垃圾車點位路線資料，全市 12 區約 4,000 個停靠點（約 1 MB，`/trash` 延遲載入，gzip 後約 100 KB）。每個停靠點一個 Point，properties 是 `district`、`village`、`address`、`arrive`、`leave`（`HH:MM`）、`route`；同一地點有多個車次時各算一筆。市民端 `/trash` 預設以萬華區西門里為位置（不在載入時跳出定位授權），可以按「使用我的位置」，或改選「行政區 里」（以該里停靠點的平均位置為準，不需要地址轉座標服務）；最近的停靠點超過 3 km 就視為不在臺北市，請使用者改選。列出所選時間起 60 分鐘內到站、最近的 10 個停靠點，附 Google 地圖步行導航。垃圾種類（一般垃圾與廚餘、平面類、立體類）的收運日寫死在 `frontend/src/citizen/Trash.tsx`，依據臺北市環保局的分天分類規定，選到當天不收的種類就不列垃圾車。
-- iTrash 站點 `data/itrash.json`：從 [iTrash 官網](https://www.itrash.com.tw/pages/site) 手抄的 18 個站點（站名、地址、有沒有垃圾收集機與瓶罐收集機），沒有座標，導航連結直接帶地址。因為沒有座標，不依距離排序。
+- iTrash 站點 `data/itrash.json`：從 [iTrash 官網](https://www.itrash.com.tw/pages/site) 手抄的 18 個站點（站名、地址、有沒有垃圾收集機與瓶罐收集機）。`lon`、`lat` 取自官網內嵌的 Google My Maps（[KML](https://www.google.com/maps/d/kml?mid=1lOax2IXhmTioMRd9YsKsPXo9voOX73w&forcekml=1)），地圖上沒有文德二號公園站，這站是 `null`。`/trash` 依距離排序，先列最近 3 站；2 km 內沒有站時會說明最近的一站在哪一區、多遠（萬華、中正都沒有站）。
 
 **真實與模擬**
 
