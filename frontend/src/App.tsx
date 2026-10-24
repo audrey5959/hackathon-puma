@@ -6,6 +6,19 @@ const Admin = lazy(() => import("./admin/Admin"));
 const Dashboard = lazy(() => import("./admin/Dashboard"));
 const BinMap = lazy(() => import("./citizen/BinMap"));
 
+// vite.config.ts 在 build 時注入
+declare const __BUILD__: { sha: string; short: string; time: string; iso: string; dev: boolean };
+
+// 正式環境跑的是哪個 commit；dev server 標成 -dev，一看就知道不是正式版
+function Version() {
+  const b = __BUILD__;
+  return (
+    <span className="version" title={`commit ${b.sha}\nbuild ${b.iso}${b.dev ? "（dev server）" : ""}`}>
+      {b.dev ? `${b.short}-dev` : <>{b.short}<span className="version-time"> · {b.time}</span></>}
+    </span>
+  );
+}
+
 export default function App() {
   const bin = location.pathname.match(/^\/b\/(\d+)$/);
   const dashboard = location.pathname === "/status";
@@ -25,6 +38,7 @@ export default function App() {
           </nav>
         )}
         <span className="tag">模擬資料：回報、案件與感測器數值皆為測試資料；桶位為臺北市開放資料</span>
+        <Version />
       </header>
       {bin ? (
         <Citizen binId={Number(bin[1])} />
