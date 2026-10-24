@@ -4,9 +4,13 @@ Vite + React + MapLibre GL（@vis.gl/react-maplibre）。前端 Worker `tongjifa
 
 | 路由 | 畫面 | 程式 |
 |---|---|---|
-| `/` | 管理端：地圖、待辦、模擬感測器 | `src/admin/` |
-| `/b/<桶編號>` | 市民回報頁（QR Code 網址） | `src/citizen/` |
+| `/` | 管理端：地圖、待辦、模擬感測器 | `src/admin/Admin.tsx` |
+| `/status` | 管理端：各區清潔狀態 | `src/admin/Dashboard.tsx` |
+| `/b/<桶編號>` | 市民回報頁（QR Code 網址） | `src/citizen/Citizen.tsx` |
 | `/map` | 市民地圖：在地圖上找桶、點桶回報 | `src/citizen/BinMap.tsx` |
+| `/trash` | 家用垃圾收受指引 | `src/citizen/Trash.tsx` |
+
+各路由的載入方式與輪詢間隔見 [../ARCHITECTURE.md](../ARCHITECTURE.md)「前端路由」。`public/sw.js` 只用來顯示「處理完畢」通知，不快取檔案。
 
 共用的 API 呼叫與型別在 `src/shared/api.ts`，MapLibre 設定在 `src/shared/map.ts`（只能從 `lazy()` 載入的頁面引用，`/b/<桶編號>` 不載入地圖），桶位讀 `../data/bins.json`。
 
