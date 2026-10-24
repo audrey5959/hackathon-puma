@@ -82,13 +82,24 @@ export function withLiveLevel(points: LevelPoint[], live: number | null): LevelP
   return next;
 }
 
+export type UsageBand = "high" | "mid" | "low";
+
+function usageFromTimes(times: number) {
+  const band: UsageBand = times >= 3 ? "high" : times >= 1 ? "mid" : "low";
+  const label = band === "high" ? "容易滿" : band === "mid" ? "普通" : "少用";
+  const detail = times === 0 ? "本週沒有到 8 分滿" : `本週 ${times} 次到 8 分滿`;
+  return { times, band, label, detail };
+}
+
+// 清單用這個：只看桶編號決定的一週次數，不畫曲線，也不受當下案件影響
+export function plannedUsage(binId: number) {
+  return usageFromTimes(fillsOf(binId));
+}
+
 export function usageOf(points: LevelPoint[]) {
   let times = 0;
   for (let i = 1; i < points.length; i++) {
     if (points[i - 1].level < FULL && points[i].level >= FULL) times += 1;
   }
-  const band = times >= 3 ? "high" : times >= 1 ? "mid" : "low";
-  const label = band === "high" ? "容易滿" : band === "mid" ? "普通" : "少用";
-  const detail = times === 0 ? "本週沒有到 8 分滿" : `本週 ${times} 次到 8 分滿`;
-  return { times, band, label, detail };
+  return usageFromTimes(times);
 }

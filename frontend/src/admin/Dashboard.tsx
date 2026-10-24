@@ -103,7 +103,7 @@ export default function Dashboard() {
       <div className="board">
         <section className="card">
           <h2>各區清潔狀態</h2>
-          <p className="muted">未完成較多的行政區排在前面。點一區可回到待辦地圖。</p>
+          <p className="muted">未完成較多的行政區排在前面。點一區可回到待辦地圖。<a href="/bins">容易滿的桶</a>在桶一覽。</p>
           <div className="district-list">
             {districts(list).map((row) => {
               const unfinished = row.open + row.assigned;

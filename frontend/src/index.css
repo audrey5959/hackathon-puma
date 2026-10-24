@@ -222,6 +222,14 @@ button:disabled { opacity: 0.5; }
 .dashboard .cases { margin-top: 12px; }
 .dashboard .cases li { padding: 0; }
 .dashboard .cases a { display: grid; gap: 6px; padding: 12px; color: inherit; text-decoration: none; }
+.dashboard .muted a { color: var(--coral); font-weight: 700; }
+.bins-tools { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
+.bins-tools .district { min-width: 10em; margin-top: 0; }
+.bin-groups { display: grid; gap: 16px; }
+.bin-groups h2 { font-size: 16px; }
+.bin-rows { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.bin-rows a { display: grid; grid-template-columns: 4.5em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; color: inherit; text-decoration: none; }
+.bin-rows a:hover { border-color: var(--ink); }
 
 @media (max-width: 760px) {
   /* 版號留在品牌那一行的右側，模擬資料標籤換到下一行，頁首不會因版號多一行 */
@@ -234,6 +242,8 @@ button:disabled { opacity: 0.5; }
   .board { grid-template-columns: 1fr; }
   .district-row { grid-template-columns: 4.5em minmax(0, 1fr); }
   .district-meta { grid-column: 2; }
+  .bin-rows a { grid-template-columns: 4.5em minmax(0, 1fr); }
+  .bin-rows .intensity { grid-column: 2; }
 }
 
 /* 市民地圖 /map：地圖占滿頁首以下的畫面 */

@@ -4,6 +4,7 @@ import Citizen from "./citizen/Citizen";
 // 市民回報頁不需要地圖，拆開載入，手機掃 QR Code 時不必下載 MapLibre
 const Admin = lazy(() => import("./admin/Admin"));
 const Dashboard = lazy(() => import("./admin/Dashboard"));
+const Bins = lazy(() => import("./admin/Bins"));
 const BinMap = lazy(() => import("./citizen/BinMap"));
 const Trash = lazy(() => import("./citizen/Trash"));
 
@@ -25,6 +26,7 @@ export default function App() {
   const bin = /^\/b(\/|$)/i.test(location.pathname);
   const binId = location.pathname.match(/^\/b\/(\d+)\/?$/i)?.[1];
   const dashboard = location.pathname === "/status";
+  const binsPage = location.pathname === "/bins";
   const finder = location.pathname === "/map";
   const trash = location.pathname === "/trash";
   return (
@@ -38,8 +40,9 @@ export default function App() {
           </nav>
         ) : (
           <nav className="nav" aria-label="管理端">
-            <a href="/" aria-current={dashboard ? undefined : "page"}>待辦</a>
+            <a href="/" aria-current={location.pathname === "/" ? "page" : undefined}>待辦</a>
             <a href="/status" aria-current={dashboard ? "page" : undefined}>清潔狀態</a>
+            <a href="/bins" aria-current={binsPage ? "page" : undefined}>桶一覽</a>
           </nav>
         )}
         <span className="tag">模擬資料：回報、案件與感測器數值皆為測試資料；桶位為臺北市開放資料</span>
@@ -56,8 +59,8 @@ export default function App() {
           <Trash />
         </Suspense>
       ) : (
-        <Suspense fallback={<p className="muted loading">{dashboard ? "載入清潔狀態中…" : "載入地圖中…"}</p>}>
-          {dashboard ? <Dashboard /> : finder ? <BinMap /> : <Admin />}
+        <Suspense fallback={<p className="muted loading">{dashboard ? "載入清潔狀態中…" : binsPage ? "載入桶一覽中…" : "載入地圖中…"}</p>}>
+          {dashboard ? <Dashboard /> : binsPage ? <Bins /> : finder ? <BinMap /> : <Admin />}
         </Suspense>
       )}
     </>
