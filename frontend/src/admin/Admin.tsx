@@ -1,16 +1,10 @@
-import * as maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { Layer, Map as MapView, Marker, NavigationControl, Popup, Source, type LayerProps, type MapRef } from "@vis.gl/react-maplibre";
 import type { FeatureCollection } from "geojson";
 import { useEffect, useRef, useState } from "react";
 import bins from "../../../data/bins.json";
 import candidates from "../../../data/candidates.json";
 import { advance, BINS, binById, clearCases, KIND_LABEL, report, STATUS_LABEL, usePoll, type Case, type Kind } from "../shared/api";
-
-// MapLibre 預設從自己檔案的同目錄找 worker；Vite 打包後同目錄沒有這個檔，要明確指定。
-// 同一份 maplibregl 也要用 mapLib 傳給 <MapView>，否則 react-maplibre 會自己再載一份，這裡的設定就不生效
-maplibregl.setWorkerUrl(workerUrl);
+import { applyChineseLabels, maplibregl, MAP_STYLE, MAX_BOUNDS } from "../shared/map";
 
 const DEMO_DISTRICTS = ["萬華區", "中正區"];
 const DEMO_POOL = BINS.filter((b) => DEMO_DISTRICTS.includes(b.properties.district));
@@ -40,19 +34,6 @@ function boundsOf(pool: typeof BINS): Bounds {
 }
 const DEMO_BOUNDS = boundsOf(DEMO_POOL);
 const districtBounds = (district: string) => (district ? boundsOf(BINS.filter((b) => b.properties.district === district)) : DEMO_BOUNDS);
-
-// OpenFreeMap 免金鑰、無流量限制；淺色底圖讓案件顏色跳出來
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
-// positron 的地名是「拼音＋中文」雙語；台北的圖只留正體中文，讀起來比較乾淨
-const ZH_LABEL: maplibregl.ExpressionSpecification = ["coalesce", ["get", "name:zh-Hant"], ["get", "name:nonlatin"], ["get", "name"]];
-function applyChineseLabels(map: maplibregl.Map) {
-  for (const layer of map.getStyle().layers) {
-    if (layer.type === "symbol" && JSON.stringify(layer.layout?.["text-field"] ?? "").includes("name:latin")) {
-      map.setLayoutProperty(layer.id, "text-field", ZH_LABEL);
-    }
-  }
-}
 
 // 閒置桶由 GPU 畫成小灰點；進行中的案件改用下方的 DOM Marker 畫，這裡把半徑設成 0 避免重疊
 const BIN_LAYER: LayerProps = {
@@ -345,7 +326,7 @@ export default function Admin() {
           mapLib={maplibregl}
           mapStyle={MAP_STYLE}
           initialViewState={{ bounds: districtBounds(district), fitBoundsOptions: { padding: 40 } }}
-          maxBounds={[121.3, 24.85, 121.8, 25.3]}
+          maxBounds={MAX_BOUNDS}
           interactiveLayerIds={showCandidates ? ["bins", "candidates"] : ["bins"]}
           cursor={hovered === null && !overCandidate ? undefined : "pointer"}
           onLoad={(e) => {

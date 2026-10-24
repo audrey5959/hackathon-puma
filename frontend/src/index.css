@@ -171,3 +171,26 @@ button:disabled { opacity: 0.5; }
   .district-row { grid-template-columns: 4.5em minmax(0, 1fr); }
   .district-meta { grid-column: 2; }
 }
+
+/* 市民地圖 /map：地圖占滿頁首以下的畫面 */
+#root:has(.finder) { display: flex; flex-direction: column; height: 100dvh; }
+.finder { position: relative; flex: 1; min-height: 0; }
+.dot.urgent { background: var(--coral); border-radius: 50%; }
+.dot.dirty { background: #d9a400; border-radius: 50%; }
+.me { width: 16px; height: 16px; border-radius: 50%; background: #2f6fde; border: 3px solid #fff; box-shadow: 0 0 0 6px #2f6fde33, 0 1px 4px #0005; }
+/* bottom 留給右下角的地圖版權列，不能蓋住 */
+.finder-foot { position: absolute; left: 0; right: 0; bottom: 22px; display: grid; gap: 8px; justify-items: end; padding: 12px; pointer-events: none; }
+.finder-foot > * { pointer-events: auto; }
+.locate { background: #fff; box-shadow: 0 2px 8px #0003; font-weight: 700; }
+.notice, .hint { justify-self: stretch; margin: 0; padding: 10px 12px; border-radius: 9px; background: var(--ink); color: var(--cream); font-size: 14px; }
+.hint { background: #fff8f4e6; color: var(--muted); text-align: center; box-shadow: 0 1px 4px #0002; }
+.sheet { justify-self: stretch; display: grid; gap: 8px; padding: 14px 16px 16px; border-radius: 14px; background: var(--cream); box-shadow: 0 -2px 16px #0003; }
+.sheet h2 { margin: 0; }
+.sheet .close { min-height: 36px; width: 36px; padding: 0; border: 0; background: transparent; font-size: 22px; line-height: 1; }
+.sheet .close:hover { background: var(--line); color: var(--ink); }
+.sheet .state { margin: 0; padding-left: 10px; border-left: 4px solid #8a7f78; }
+.sheet .state.urgent { border-left-color: var(--coral); }
+.sheet .state.dirty { border-left-color: #d9a400; }
+.cta { display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 9px; background: var(--ink); color: var(--cream); font-size: 18px; font-weight: 700; text-decoration: none; }
+.cta:hover { background: var(--coral); }
+.sheet a.muted { justify-self: center; }
