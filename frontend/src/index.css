@@ -182,18 +182,28 @@ button:disabled { opacity: 0.5; }
 .progress li.on { background: var(--ink); color: var(--cream); }
 .nearby { margin-top: 24px; }
 .nearby ol { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
-.nearby a { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: inherit; text-decoration: none; }
-.nearby a:hover { border-color: var(--ink); }
+.nearby li > a { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: inherit; text-decoration: none; }
+.nearby li > a:hover { border-color: var(--ink); }
 .nearby .first a { padding: 16px; border: 2px solid var(--ink); font-size: 17px; }
 .nearby .tag { justify-self: start; }
 .citizen input[type="time"], .citizen select { min-height: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: 9px; background: var(--cream); font: inherit; }
-.stops { list-style: none; padding: 0; display: grid; gap: 8px; }
-.stops li { padding: 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--cream); }
-.stops p { margin: 4px 0 8px; }
-.stops a { color: var(--coral); font-weight: 700; }
 .citizen .chips { flex-wrap: wrap; }
-.citizen .chips button[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
-.itrash h2 { margin-top: 24px; }
+/* /trash：行政區、里兩層下拉加定位按鈕，手機寬度擠在同一行 */
+.place { display: flex; gap: 8px; }
+.place select { flex: 1; min-width: 0; }
+.place button { flex: none; padding: 0 12px; }
+.week-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.week { flex: 1; list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.week li { padding: 6px 0; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 14px; }
+.week li.on { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+.week li.today { outline: 2px solid var(--coral); outline-offset: 1px; font-weight: 700; }
+.nearby .row .muted:last-child, .nearby .row [aria-hidden] { flex: none; }
+.nearby p a { color: var(--ink); font-weight: 700; }
+.when { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.itrash summary { min-height: 44px; display: flex; align-items: center; gap: 6px; font-weight: 700; cursor: pointer; list-style: none; }
+.itrash summary::-webkit-details-marker { display: none; }
+.itrash summary::before { content: "▸"; transition: transform 0.15s; }
+.itrash[open] summary::before { transform: rotate(90deg); }
 
 .dashboard { height: calc(100vh - 56px); overflow: auto; padding: 20px; display: grid; gap: 16px; align-content: start; }
 .dashboard h1 { margin: 0; }
