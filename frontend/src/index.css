@@ -188,9 +188,15 @@ button:disabled { opacity: 0.5; }
 .nearby .tag { justify-self: start; }
 .citizen input[type="time"], .citizen select { min-height: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: 9px; background: var(--cream); font: inherit; }
 .citizen .chips { flex-wrap: wrap; }
-/* /trash：行政區、里兩層下拉加定位按鈕，手機寬度擠在同一行 */
+/* /trash：行政區、里兩層可搜尋的下拉加定位按鈕，手機寬度擠在同一行 */
 .place { display: flex; gap: 8px; }
-.place select { flex: 1; min-width: 0; }
+.combo { position: relative; flex: 1; min-width: 0; }
+.combo input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--ink); border-radius: 9px; background: var(--cream); color: var(--ink); font: inherit; font-size: 16px; }
+/* 清單高度有上限，手機鍵盤彈出時還看得到 */
+.combo ul { position: absolute; z-index: 10; top: calc(100% + 4px); left: 0; min-width: 100%; max-height: min(280px, 40dvh); overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 6px; box-sizing: border-box; list-style: none; background: #fff; border: 1px solid var(--ink); border-radius: 9px; box-shadow: 0 8px 24px #211d1d29; }
+.combo li { padding: 10px; border-radius: 7px; white-space: nowrap; cursor: pointer; }
+.combo li.active { background: var(--ink); color: var(--cream); }
+.combo li.empty { color: var(--muted); cursor: default; }
 .place button { flex: none; padding: 0 12px; }
 .week-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
 .week { flex: 1; list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }

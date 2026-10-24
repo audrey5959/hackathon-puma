@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import itrash from "../../../data/itrash.json";
 import trucks from "../../../data/trucks.json";
+import Combobox from "./Combobox";
 
 // 預設不跳定位授權，先用示範區的西門里
 const DEFAULT_PLACE = "萬華區 西門里";
@@ -55,6 +56,23 @@ for (const key of PLACES.keys()) {
   const [district, village] = key.split(" ");
   VILLAGES.set(district, [...(VILLAGES.get(district) ?? []), village]);
 }
+
+// 搜尋時忽略「臺／台」和「區」「里」；空白分開的每個詞都要比對得到，例如「萬華 西門」
+const norm = (s: string) => s.replace(/臺/g, "台").replace(/[區里\s]/g, "");
+const matcher = (query: string) => {
+  const words = query.split(/\s+/).map(norm).filter(Boolean);
+  return (key: string) => words.every((w) => norm(key).includes(w));
+};
+const districtOptions = (query: string) =>
+  [...VILLAGES.keys()].filter(matcher(query)).map((d) => ({ key: d, label: d }));
+// 沒打字時列目前這一區的里；打字時也找其他區，目前這一區的排前面
+const villageOptions = (district: string) => (query: string) => {
+  const own = VILLAGES.get(district)!.map((v) => ({ key: `${district} ${v}`, label: v }));
+  if (!query.trim()) return own;
+  const hit = matcher(query);
+  const others = [...PLACES.keys()].filter((key) => !key.startsWith(`${district} `)).map((key) => ({ key, label: key }));
+  return [...own, ...others].filter((o) => hit(o.key));
+};
 
 const STOPS = trucks.features.map((f) => ({ ...f.properties, coords: f.geometry.coordinates }));
 type Stop = (typeof STOPS)[number] & { d: number };
@@ -157,18 +175,20 @@ export default function Trash() {
       <h1>家用垃圾去哪丟</h1>
       <p className="muted">街上的行人清潔箱只收隨手垃圾。家用垃圾請交給垃圾車。</p>
       <div className="place">
-        <select
-          aria-label="行政區"
-          value={mine ? "" : district}
-          onChange={(e) => e.target.value && choose(`${e.target.value} ${VILLAGES.get(e.target.value)![0]}`)}
-        >
-          {mine && <option value="">我的位置</option>}
-          {[...VILLAGES.keys()].map((d) => <option key={d}>{d}</option>)}
-        </select>
-        <select aria-label="里" value={mine ? "" : village} disabled={!!mine} onChange={(e) => choose(`${district} ${e.target.value}`)}>
-          {mine && <option value="">—</option>}
-          {VILLAGES.get(district)!.map((v) => <option key={v}>{v}</option>)}
-        </select>
+        <Combobox
+          label="行政區"
+          value={mine ? "我的位置" : district}
+          options={districtOptions}
+          empty="找不到符合的行政區"
+          onSelect={(d) => choose(`${d} ${VILLAGES.get(d)![0]}`)}
+        />
+        <Combobox
+          label="里"
+          value={mine ? "—" : village}
+          options={villageOptions(district)}
+          empty="找不到符合的里"
+          onSelect={choose}
+        />
         <button disabled={locating} onClick={locate}>{locating ? "定位中…" : "我的位置"}</button>
       </div>
       {locErr && <p className="err" role="status">{locErr}</p>}
