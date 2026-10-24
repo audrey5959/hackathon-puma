@@ -10,6 +10,13 @@ const DIRS = ["北", "東北", "東", "東南", "南", "西南", "西", "西北"
 type Bin = (typeof BINS)[number];
 interface Near { bin: Bin; m: number; dir: string }
 
+// 市民看得懂的說明；原始錯誤由呼叫端 console.error 留給除錯
+function reportErrorMessage(e: unknown): string {
+  if (!(e instanceof HttpError)) return "網路不穩，請再按一次。";
+  if (e.status >= 500) return "系統忙碌中，請稍後再試。";
+  return "這個桶目前無法回報，請改用「地圖找桶」回報附近的桶。";
+}
+
 // 桶與桶之間只有幾百公尺，用平面近似就夠準
 function measure(from: Bin, to: Bin): { m: number; dir: string } {
   const [x0, y0] = from.geometry.coordinates;
@@ -174,7 +181,8 @@ export default function Citizen({ binId }: { binId: number }) {
       history.replaceState(null, "", `?case=${created.id}`);
       setCaseId(String(created.id));
     } catch (e) {
-      setErr(String(e));
+      console.error(e);
+      setErr(reportErrorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -193,7 +201,7 @@ export default function Citizen({ binId }: { binId: number }) {
               <button key={k} disabled={busy} onClick={() => send(k)}>{KIND_LABEL[k]}</button>
             ))}
           </div>
-          {err && <p className="err">回報失敗：{err}</p>}
+          {err && <p className="err">{err}</p>}
         </>
       ) : (
         <Progress key={caseId} bin={bin} caseId={caseId} onReset={reset} />
